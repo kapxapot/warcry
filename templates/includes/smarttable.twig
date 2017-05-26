@@ -1,0 +1,76 @@
+<div class="table-responsive">
+	<table st-table="displayedItems" st-safe-src="items" class="table table-striped" ng-cloak>
+		<thead>
+			<tr>
+				{% for col, value in columns if value.hidden is null %}
+					<th>
+						{% if value.no_sort is null %}
+							<a href="javascript:void()" ng-click="setOrder('{{ col }}')">{{ value.name }}</a>
+							<span ng-show="orderByField == '{{ col }}'">{{ "{{reverseSort ? '▼' : '▲'}}" }}</span>
+						{% else %}
+							{{ value.name }}
+						{% endif %}
+					</th>
+				{% endfor %}
+				{% if actions %}
+					<th>Действия</th>
+				{% endif %}
+			</tr>
+			{% if filter %}
+				{% set col = columns[filter.column] %}
+				{% set e = col.entity %}
+				<tr>
+					<th colspan="{{ columns|length + (actions ? 1 : 0) }}">
+						<select st-search="{{ filter.column }}" class="form-control" id="filter_{{ e }}">
+			    			<option value="">{{ filter.label }}</option>
+		    				<option ng-repeat="{{ e }}_item in {{ e }}" value="{{ '{{' ~  e ~ '_item.id}}' }}">{{ '{{' ~ e ~ '_item.' ~ m.entity_field(_context, col) ~ '}}' }}</option>
+						</select>
+					</th>
+				</tr>
+			{% endif %}
+		</thead>
+		<tbody>
+			<tr ng-repeat="i in displayedItems|orderBy:orderByField:reverseSort">
+				{% block table_columns %}
+					{% for col, value in columns if value.hidden is null %}
+						{% set type = value.display_type ?? value.type %}
+						{% if value.template %}
+							{{ m.column_template(value.template) }}
+						{% elseif value.entity %}
+							{{ m.column_entity(_context, col) }}
+						{% elseif type == 'bool' %}
+							{{ m.column_bool(col) }}
+						{% elseif type == 'img' %}
+							{{ m.column_img(col) }}
+						{% elseif type == 'date' %}
+							{{ m.column_date(col) }}
+						{% else %}
+							{{ m.column(col) }}
+						{% endif %}
+					{% endfor %}
+				{% endblock %}
+				{% if actions %}
+					<td class="vert-align">
+						{% if can_edit %}
+							<button type="button" class="btn btn-primary btn-pad" ng-click="editItem(i)" ng-show="i.access.edit">
+								<span class="glyphicon glyphicon-pencil" title="Редактировать"></span>
+							</button>
+						{% endif %}
+						{% if can_delete %}
+							<button type="button" class="btn btn-danger btn-pad" ng-click="deleteItem(i)" ng-show="i.access.delete">
+								<span class="glyphicon glyphicon-remove" title="Удалить"></span>
+							</button>
+						{% endif %}
+					</td>
+				{% endif %}
+			</tr>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="{{ columns|length + (actions ? 1 : 0) }}" class="text-center">
+					<div st-pagination="" st-items-by-page="10" st-displayed-pages="15"></div>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>

@@ -1,0 +1,19 @@
+{% extends 'entity.twig' %}
+
+{% block modal_shown %}
+	if ($scope.itemId == 0) {
+		init();
+	}
+	else {
+		var textField = $('#entityForm').find('#text');
+	
+		textField.prop('disabled', true);
+	
+		$scope.get('/api/v1/articles/' + $scope.itemId).success(function(data) {
+			textField.val(data['text']);
+			textField.prop('disabled', false);
+			
+			init();
+		});
+	}
+{% endblock %}
