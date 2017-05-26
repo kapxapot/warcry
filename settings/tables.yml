@@ -1,0 +1,174 @@
+articles:
+  table: enc_data
+  name_field: name_ru
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - parent_id
+    - cat
+    - name_ru
+    - name_en
+    - origin
+    - text
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+    - game_id
+  private:
+    - hideeng
+    - announce
+    - published
+    - no_breadcrumb
+
+article_categories:
+  table: enc_cat
+  name_field: name_ru
+  sort: name_ru
+  public:
+    - id
+    - name_ru
+    - name_en
+
+auth_tokens:
+  table: auth_tokens
+  private:
+    - id
+    - user_id
+    - token
+    - expires_at
+
+gallery_authors:
+  table: gallery_authors
+  name_field: name
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - name
+    - deviant
+    - alias
+    - real_name
+    - real_name_en
+    - description
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+
+gallery_pictures:
+  table: gallery_pictures
+  name_field: comment
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - author_id
+    - comment
+    - official
+    - description
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+    - points
+    - picture_type
+    - thumb_type
+  private:
+    - published
+
+games:
+  table: warcry_game
+  name_field: name
+  sort: position
+  public:
+    - id
+    - name
+  private:
+    - alias
+    - news_forum_id
+    - main_forum_id
+    - published
+    - position
+    - icon
+
+menus:
+  table: wow_menu_sections
+  name_field: text
+  sort: created_at
+  reverse: true
+  private:
+    - id
+    - link
+    - text
+    - description
+    - position
+    - game_id
+    - created_at
+    - updated_at
+
+menu_items:
+  table: wow_menu_items
+  name_field: text
+  sort: position
+  private:
+    - id
+    - section_id
+    - link
+    - text
+    - position
+    - created_at
+    - updated_at
+
+roles:
+  table: warcry_role
+  name_field: name
+  sort: name
+  public:
+    - id
+    - name
+    - tag
+
+streams:
+  table: warcry_streams_items
+  name_field: title
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - stream_id
+    - stream_alias
+    - type
+    - title
+    - comments
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+  private:
+    - published
+
+stream_types:
+  table: warcry_streams_types
+  name_field: title
+  public:
+    - id
+    - url
+    - title
+
+users:
+  table: new_news_users
+  name_field: login
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - login
+    - name
+    - role_id
+    - created_at
+    - updated_at
+  private:
+    - forum_name
+    - email

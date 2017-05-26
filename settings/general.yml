@@ -1,0 +1,34 @@
+displayErrorDetails: true
+addContentLengthHeader: false
+
+# constants for PHP code
+log_errors: true
+password_min: 5
+login_min: 3
+login_max: 20
+captcha_digits: 3
+# in hours
+token_ttl: 1
+
+# folders for PHP code
+folders:
+  gallery_pictures: /../../../../../gallery/pictures/
+  gallery_thumbs: /../../../../../gallery/pictures/thumb/
+  gallery_pictures_public: /gallery/pictures/
+  gallery_thumbs_public: /gallery/pictures/thumb/
+
+logger:
+  name: slim-app
+  path: /../logs/app.log
+
+view:
+  templates_path: /../templates/
+  cache_path: false
+
+modules:
+  - db
+  - view_globals
+  - tables
+  - entities
+  - access
+  - localization

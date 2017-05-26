@@ -1,0 +1,527 @@
+articles:
+
+  alias: articles
+  name_gen: статьи
+  name_accus: статью
+  title: Статьи
+
+  #filter:
+  #  column: game_id
+  #  label: Все игры
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+
+    game_id:
+      name: Игра
+      entity: games
+
+    parent_id:
+      name: Родительская статья
+      entity: articles
+      nullable: true
+      hidden: true
+      access: publish
+      template: '[{{%item%.id}}] {{%name%}}'
+      attr: [ nullable, hidden ]
+
+    cat:
+      name: Категория
+      entity: article_categories
+      nullable: true
+      hidden: true
+      access: publish
+      attr: [ nullable, hidden ]
+
+    name_ru:
+      name: Заголовок
+      #template: '<a href="/article/{{i.name_en}}" target="_blank" ng-show="i.published == 1">{{i.name_ru}} ({{i.name_en}})</a><span ng-hide="i.published == 1">{{i.name_ru}}</span>'
+      template: >
+        (row.published == 1) ? '<a href="/article/' + row.name_en + '" target="_blank">' + row.name_ru + ' (' + row.name_en + ')</a>' : row.name_ru + ' (' + row.name_en + ')'
+
+    name_en:
+      name: Eng. Title
+      form_name: Английский заголовок
+      hidden: true
+      tooltip: 'Этот заголовок выводится в адресе статьи, а также может нести информацию об исходном наименовании предмета статьи.'
+      access: publish
+      attr: [ hidden ]
+
+    hideeng:
+      name: Без англ. заг.
+      form_name: Скрывать английский заголовок
+      type: bool
+      hidden: true
+      access: publish
+      attr: [ hidden ]
+
+    text:
+      name: Текст
+      type: html
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    origin:
+      name: Источник
+      type: url
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    announce:
+      name: Анонс
+      type: bool
+      hidden: true
+      access: publish
+      attr: [ hidden ]
+
+    no_breadcrumb:
+      name: Скр. в пути
+      form_name: Скрыта в пути (в «хлебных крошках»)
+      type: bool
+      hidden: true
+      access: publish
+      attr: [ hidden ]
+
+    published:
+      name: Публичная
+      form_name: Опубликовать
+      type: bool
+      access: publish
+
+    created_by_name:
+      name: Пользователь
+      readonly: true
+      attr: [ readonly ]
+    
+    created_at:
+      name: Дата создания
+      type: date
+      readonly: true
+      attr: [ readonly ]
+
+
+gallery_authors:
+
+  alias: gallery_authors
+  name_gen: автора
+  name_accus: автора
+  title: Галерея
+
+  #delete_extra_message: " ' + i.name + ((i.pics_count > 0) ? ' (и ' + i.pics_count + ' картинок)' : '') + '"
+  delete_extra_message: " ' + i.name + ' (со всеми картинками)' + '"
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+
+    name:
+      name: Имя
+      #template: '<a href="/gallery/{{i.alias}}" target="_blank">{{i.name}}</a>'
+      template: >
+        '<a href="/gallery/' + row.alias + '" target="_blank">' + row.name + '</a>'
+
+    alias:
+      name: Алиас
+
+    deviant:
+      name: Deviant
+      #template: '<a href="//{{i.deviant}}.deviantart.com" target="_blank">{{i.deviant}}</a>'
+      template: >
+        '<a href="//' + row.deviant + '.deviantart.com" target="_blank">' + row.deviant + '</a>'
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    real_name:
+      name: Настоящее имя
+      #template: "{{i.real_name}}{{i.real_name_en ? ' (' + i.real_name_en + ')' : ''}}"
+      template: >
+        row.real_name + (row.real_name_en ? ' (' + row.real_name_en + ')' : '')
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    real_name_en:
+      name: Real Name
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    description:
+      name: Описание
+      type: html
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    created_by_name:
+      name: Пользователь
+      readonly: true
+      attr: [ readonly ]
+    
+    created_at:
+      name: Дата создания
+      type: date
+      readonly: true
+      attr: [ readonly ]
+
+    pics_count:
+      name: Картинки
+      no_sort: true
+      readonly: true
+      #template: >
+        #<a href="gallery/{{i.id}}/gallery_pictures">
+        #<button type="button" class="btn btn-primary btn-pad">
+        #<span class="glyphicon glyphicon-cog" title="Редактировать картинки"></span>
+        #</button>
+        #</a>
+      template: >
+        '<a href="gallery/' + row.id + '/gallery_pictures"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-cog" title="Редактировать картинки"></span></button></a>'
+      attr: [ no_sort, readonly ]
+
+
+gallery_pictures:
+
+  alias: gallery_pictures
+  name_gen: картинки
+  name_accus: картинку
+  title: Картинки
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+
+    pic:
+      name: Картинка
+      readonly: true
+      #template: '<a href="{{i.picture}}" target="_blank"><img src="{{i.thumb}}" width="50"></a>'
+      template: >
+        '<a href="' + row.picture + '" target="_blank"><img src="' + row.thumb + '" width="50"></a>'
+      attr: [ readonly ]
+
+    comment:
+      #template: '<a href="/gallery/pictures/{{i.id}}" target="_blank">{{i.comment}}</a>'
+      template: >
+        '<a href="/gallery/pictures/' + row.id + '" target="_blank">' + row.comment + '</a>'
+      name: Заголовок
+
+    picture:
+      name: Картинка
+      type: thumb
+      hidden: true
+      tooltip: Выберите картинку и настройте ее миниатюру.
+      attr: [ hidden ]
+
+    description:
+      name: Описание
+      type: html
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+        
+    official:
+      name: Официальная
+      type: bool
+      hidden: true
+      attr: [ hidden ]
+        
+    published:
+      name: Публичная
+      form_name: Опубликовать
+      type: bool
+      access: publish
+
+    created_by_name:
+      name: Пользователь
+      readonly: true
+      attr: [ readonly ]
+
+    created_at:
+      name: Дата создания
+      type: date
+      readonly: true
+      attr: [ readonly ]
+
+
+games:
+
+  alias: games
+  name_gen: игры
+  name_accus: игру
+  title: Игры
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+
+    icon:
+      name: Иконка
+      no_sort: true
+      type: site_url
+      display_type: img
+      attr: [ no_sort ]
+
+    name:
+      name: Название
+
+    alias:
+      name: Алиас
+
+    news_forum_id:
+      name: Id новостного форума
+      type: number
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    main_forum_id:
+      name: Id игрового форума
+      type: number
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    position:
+      name: Позиция
+      type: number
+      default: 1
+
+    published:
+      name: Публичная
+      form_name: Опубликовать
+      type: bool
+      access: publish
+
+
+menus:
+
+  alias: menus
+  name_gen: меню
+  name_accus: меню
+  title: Меню
+
+  #filter:
+  #  column: game_id
+  #  label: Все игры
+
+  #delete_extra_message: " ' + i.text + ((i.items_count > 0) ? ' (и ' + i.items_count + ' элементов)' : '') + '"
+  delete_extra_message: " ' + i.text + ' (со всеми элементами)' + '"
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+
+    game_id:
+      name: Игра
+      entity: games
+
+    link:
+      name: Ссылка
+      type: site_url
+      #template: '<a href="{{i.link}}" target="_blank">{{i.text}}</a>'
+      template: >
+        '<a href="' + row.link + '" target="_blank">' + row.text + '</a>'
+
+    text:
+      name: Текст
+      hidden: true
+      attr: [ hidden ]
+
+    position:
+      name: Позиция
+      type: number
+      default: 1
+    
+    created_at:
+      name: Дата создания
+      type: date
+      readonly: true
+      attr: [ readonly ]
+
+    items_count:
+      name: Подменю
+      no_sort: true
+      readonly: true
+      #template: >
+        #<a href="menus/{{i.id}}/menu_items">
+        #<button type="button" class="btn btn-primary btn-pad">
+        #<span class="glyphicon glyphicon-cog" title="Редактировать элементы меню"></span>
+        #</button>
+        #</a>
+      template: >
+        '<a href="menus/' + row.id + '/menu_items"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-cog" title="Редактировать элементы меню"></span></button></a>'
+      attr: [ no_sort, readonly ]
+
+
+menu_items:
+
+  alias: menu_items
+  name_gen: элемента меню
+  name_accus: элемент меню
+  title: Элементы меню
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+    
+    link:
+      name: Ссылка
+      type: site_url
+      #template: '<a href="{{i.link}}" target="_blank">{{i.text}}</a>'
+      template: >
+        '<a href="' + row.link + '" target="_blank">' + row.text + '</a>'
+
+    text:
+      name: Текст
+      hidden: true
+      attr: [ hidden ]
+
+    position:
+      name: Позиция
+      type: number
+      default: 1
+    
+    created_at:
+      name: Дата создания
+      type: date
+      readonly: true
+      attr: [ readonly ]
+
+
+streams:
+
+  alias: streams
+  name_gen: стрима
+  name_accus: стрим
+  title: Стримы
+
+  #filter:
+  #  column: type
+  #  label: Все типы
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+
+    title:
+      name: Название
+      #template: '<a href="/streams/{{i.stream_alias ? i.stream_alias : i.stream_id}}" target="_blank" ng-show="i.published == 1">{{i.title}}</a><span ng-hide="i.published == 1">{{i.title}}</span>'
+      template: >
+        (row.published == 1) ? '<a href="/streams/' + (row.stream_alias ? row.stream_alias : row.stream_id) + '" target="_blank">' + row.title + '</a>' : row.title
+
+    type:
+      name: Тип
+      entity: stream_types
+
+    stream_id:
+      name: Код
+      tooltip: Уникальный идентификатор стрима.
+
+    stream_alias:
+      name: Алиас
+      nullable: true
+      hidden: true
+      access: publish
+      tooltip: Оставьте пустым, если совпадает с кодом.
+      attr: [ nullable, hidden ]
+
+    comments:
+      name: Описание
+      type: html
+      hidden: true
+      tooltip: Описание также загружается (и перезаписывается) из самого стрима.
+      attr: [ hidden ]
+
+    published:
+      name: Публичный
+      form_name: Опубликовать
+      type: bool
+      access: publish
+
+    created_by_name:
+      name: Пользователь
+      readonly: true
+      attr: [ readonly ]
+    
+    created_at:
+      name: Дата создания
+      type: date
+      readonly: true
+      attr: [ readonly ]
+
+users:
+
+  alias: users
+  name_gen: пользователя
+  name_accus: пользователя
+  title: Пользователи
+
+  #filter:
+  #  column: role_id
+  #  label: Все роли
+
+  columns:
+    id:
+      name: id
+      readonly: true
+      attr: [ readonly ]
+
+    login:
+      name: Логин
+      #template: "{{i.login}}{{i.name ? ' (' + i.name + ')' : ''}}"
+      template: >
+        row.login + (row.name ? ' (' + row.name + ')' : '')
+
+    name:
+      name: Отображаемое имя
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    email:
+      name: E-mail
+      type: email
+
+    role_id:
+      name: Роль
+      entity: roles
+      default: 3
+
+    forum_name:
+      name: Имя на форуме
+      nullable: true
+      hidden: true
+      attr: [ nullable, hidden ]
+
+    password:
+      name: Пароль
+      type: password
+      nullable: true
+      hidden: true
+      readonly: true
+      on_form: true
+      tooltip: Введите пароль, если хотите его изменить. Иначе оставьте поле пустым.
+      attr: [ nullable, hidden, readonly, on_form ]
+    
+    created_at:
+      name: Дата регистрации
+      type: date
+      readonly: true
+      attr: [ readonly ]

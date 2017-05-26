@@ -1,0 +1,20 @@
+site_name: Warcry.ru
+site_url: 'http://warcry.ru'
+admin_title: Админ
+
+# folders for Twig only
+folders:
+  # public folder for site's CSS and JS
+  public: /codiad/workspace/warcry_api/public/
+  # public folder for shared libraries (JS)
+  lib: /lib/
+
+entity_menu:
+  games: Игры
+  users: Пользователи
+  menus: Меню
+  articles: Статьи
+  gallery_authors: Галерея
+  streams: Стримы
+
+mde: true
