@@ -56,11 +56,12 @@ class Validator extends Contained {
 		return !empty($this->errors);
 	}
 
-	public function getRulesFor($table, $data, $id = null) {
+	/*public function getRulesFor($table, $data, $id = null) {
 		$rules = [];
 		
 		$name = function() { return v::notBlank()->alnum(); };
 		$alias = function() { return v::noWhitespace()->notEmpty()->alnum(); };
+		$extendedAlias = function() { return v::noWhitespace()->notEmpty()->regex('/^[\w]+$/'); };
 		$text = function() { return v::notBlank(); };
 		$url = function() { return v::noWhitespace()->notEmpty(); };
 		$posInt = function() { return v::numeric()->positive(); };
@@ -127,8 +128,8 @@ class Validator extends Contained {
 			case 'streams':
 				$rules = [
 					'title' => $text()->streamTitleAvailable($id),
-					'stream_id' => $alias()->streamIdAvailable($id),
-					'comments' => $text(),
+					'stream_id' => $extendedAlias()->streamIdAvailable($id),
+					'description' => $text(),
 				];
 				
 				break;
@@ -152,5 +153,5 @@ class Validator extends Contained {
 		}
 
 		return $rules;
-	}
+	}*/
 }

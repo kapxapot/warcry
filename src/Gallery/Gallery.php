@@ -2,29 +2,46 @@
 
 namespace App\Gallery;
 
-use Warcry\Contained;
+//use Warcry\Contained;
+//use Warcry\File\File;
+//use Warcry\File\Image;
 
-use Warcry\File\File;
-use Warcry\File\Image;
-
-class Gallery extends Contained {
-	const IMAGE_TYPES = [
+class Gallery extends GalleryBase {
+	/*const IMAGE_TYPES = [
 		'jpeg' => 'jpg',
 		'png' => 'png',
 		'gif' => 'gif',
 	];
 	
-	private $folders;
-	private $file;
-	
+	private $folders;*/
+
 	public function __construct($container) {
-		parent::__construct($container);
+		$settings = [
+			'base_dir' => __DIR__,
+			'fields' => [
+				'picture_type' => 'picture_type',
+				'thumb_type' => 'thumb_type',
+				//'picture' => 'picture',
+				//'thumb' => 'thumb',
+			],
+			'folders' => [
+				'picture' => [
+					'storage' => 'gallery_pictures',
+					'public' => 'gallery_pictures_public',
+				],
+				'thumb' => [
+					'storage' => 'gallery_thumbs',
+					'public' => 'gallery_thumbs_public',
+				],
+			],
+		];
+
+		parent::__construct($container, $settings);
 		
-		$this->folders = $this->getSettings('folders');
-		$this->file = new File();
+		//$this->folders = $this->getSettings('folders');
 	}
 	
-	private function getFolder($folder) {
+	/*private function getFolder($folder) {
 		if (!isset($this->folders[$folder])) {
 			throw new \InvalidArgumentException('Неизвестная папка с изображениями: ' . $folder);
 		}
@@ -92,8 +109,7 @@ class Gallery extends Contained {
 		// чтобы не гонять картинку туда-сюда
 		// в этом случае поле 'picture' приходит пустое
 		if (array_key_exists('picture', $data)) {
-			$picture = new Image();
-			$picture->parseBase64($data['picture']);
+			$picture = Image::parseBase64($data['picture']);
 			if ($picture->notEmpty()) {
 				$this->savePicture($item, $picture);
 			}
@@ -101,22 +117,13 @@ class Gallery extends Contained {
 		
 		// пока не должно быть пустого поля 'thumb', но потом почему бы и нет
 		if (array_key_exists('thumb', $data)) {
-			$thumb = new Image();
-			$thumb->parseBase64($data['thumb']);
+			$thumb = Image::parseBase64($data['thumb']);
 			if ($thumb->notEmpty()) {
 				$this->saveThumb($item, $thumb);
 			}
 		}
 		
 		$item->save();
-	}
-	
-	private function cleanUp($mask, $except = null) {
-		foreach (glob($mask) as $toDel) {
-			if ($toDel != $except) {
-				$this->file->delete($toDel);
-			}
-		}
 	}
 
 	private function savePicture($item, $picture) {
@@ -127,25 +134,25 @@ class Gallery extends Contained {
 		
 		// delete previous version if extension changed
 		$mask = $this->buildPicturePath($item->id, '*');
-		$this->cleanUp($mask, $fileName);
+		File::cleanUp($mask, $fileName);
 	}
 	
 	private function saveThumb($item, $thumb) {
 		$fileName = $this->buildThumbPath($item->id, $thumb->imgType);
-    	$thumb->save($fileName);
+		$thumb->save($fileName);
 		
 		$item->thumb_type = $thumb->imgType;
 		
 		// delete previous version if extension changed
 		$mask = $this->buildThumbPath($item->id, '*');
-		$this->cleanUp($mask, $fileName);
+		File::cleanUp($mask, $fileName);
 	}
 	
 	public function delete($item) {
 		$pictureFileName = $this->buildPicturePath($item->id, $item->picture_type);
-		$this->file->delete($pictureFileName);
+		File::delete($pictureFileName);
 
 		$thumbFileName = $this->buildThumbPath($item->id, $item->thumb_type);
-		$this->file->delete($thumbFileName);
-	}
+		File::delete($thumbFileName);
+	}*/
 }

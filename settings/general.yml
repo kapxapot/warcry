@@ -3,9 +3,14 @@ addContentLengthHeader: false
 
 # constants for PHP code
 log_errors: true
+debug: true
+
+# validation
 password_min: 5
 login_min: 3
 login_max: 20
+
+# auth
 captcha_digits: 3
 # in hours
 token_ttl: 1
@@ -16,17 +21,20 @@ folders:
   gallery_thumbs: /../../../../../gallery/pictures/thumb/
   gallery_pictures_public: /gallery/pictures/
   gallery_thumbs_public: /gallery/pictures/thumb/
+  comics_pages: /../../../../../comics/pages/
+  comics_thumbs: /../../../../../comics/pages/thumb/
+  comics_pages_public: /comics/pages/
+  comics_thumbs_public: /comics/pages/thumb/
 
 logger:
   name: slim-app
   path: /../logs/app.log
 
 view:
-  templates_path: /../templates/
+  templates_path: /../views/
   cache_path: false
 
 modules:
-  - db
   - view_globals
   - tables
   - entities

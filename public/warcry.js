@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(function() {
 	focusOnModals();
     hideAlerts();
 
@@ -58,16 +58,26 @@ function hideModal(name) {
 }
 
 function signedIn(data) {
-	localStorage.setItem('auth_token', data['token']);
+	saveToken(data['token']);
 	location.reload();
 }
 
-function getToken() {
+function saveToken(token) {
+	localStorage.setItem('auth_token', token);
+}
+
+function loadToken() {
 	return localStorage.getItem('auth_token');
 }
 
-function parseText(text, format = 'plain') {
-	return (format == 'markdown') ? parseMarkdown(text) : text;
+function hasToken() {
+	return loadToken();
+}
+
+function getHeaders() {
+	return {
+		Authorization: 'Basic ' + loadToken(),
+	};
 }
 
 function parseMarkdown(text) {
@@ -91,4 +101,19 @@ function getById(items, id) {
 	}
 	
 	return null;
+}
+
+function parseDate(input) {
+	var mainParts = input.split(' ');
+	var datePart = mainParts[0];
+	var timePart = mainParts[1];
+
+	var dateSubparts = datePart.split('-');
+	var timeSubparts = timePart.split(':');
+
+	return new Date(dateSubparts[0], dateSubparts[1] - 1, dateSubparts[2], timeSubparts[0], timeSubparts[1], timeSubparts[2]);
+}
+
+function dateToString(date) {
+	return date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2);
 }

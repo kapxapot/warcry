@@ -1,5 +1,6 @@
 articles:
   table: enc_data
+  api: full
   name_field: name_ru
   sort: created_at
   reverse: true
@@ -24,6 +25,7 @@ articles:
 
 article_categories:
   table: enc_cat
+  api: list
   name_field: name_ru
   sort: name_ru
   public:
@@ -39,8 +41,116 @@ auth_tokens:
     - token
     - expires_at
 
+comic_issues:
+  table: comic_issue
+  api: full
+  name_field: number
+  sort: number
+  public:
+    - id
+    - series_id
+    - number
+    - issued_on
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+    - published
+    - description
+    - origin
+    - name_ru
+    - name_en
+
+comic_pages:
+  table: comic_page
+  api: full
+  name_field: number
+  sort: number
+  public:
+    - id
+    - comic_issue_id
+    - number
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+    - published
+    - type
+
+comic_publishers:
+  table: comic_publisher
+  api: full
+  name_field: name
+  sort: name
+  public:
+    - id
+    - name
+    - website
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+
+comic_series:
+  table: comic_series
+  api: full
+  name_field: name_ru
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - game_id
+    - name_ru
+    - name_en
+    - alias
+    - publisher_id
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+    - description
+
+comic_standalones:
+  table: comic_standalone
+  api: full
+  name_field: name_ru
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - name_ru
+    - name_en
+    - game_id
+    - alias
+    - publisher_id
+    - issued_on
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+    - published
+    - description
+    - origin
+
+comic_standalone_pages:
+  table: comic_page
+  api: full
+  name_field: number
+  sort: number
+  public:
+    - id
+    - comic_standalone_id
+    - number
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+    - published
+    - type
+
 gallery_authors:
   table: gallery_authors
+  api: full
   name_field: name
   sort: created_at
   reverse: true
@@ -59,6 +169,7 @@ gallery_authors:
 
 gallery_pictures:
   table: gallery_pictures
+  api: full
   name_field: comment
   sort: created_at
   reverse: true
@@ -80,6 +191,7 @@ gallery_pictures:
 
 games:
   table: warcry_game
+  api: full
   name_field: name
   sort: position
   public:
@@ -93,8 +205,19 @@ games:
     - position
     - icon
 
+genders:
+  table: gender
+  api: list
+  name_field: name
+  sort: id
+  private:
+    - id
+    - name
+    - tag
+
 menus:
   table: wow_menu_sections
+  api: full
   name_field: text
   sort: created_at
   reverse: true
@@ -110,6 +233,7 @@ menus:
 
 menu_items:
   table: wow_menu_items
+  api: full
   name_field: text
   sort: position
   private:
@@ -123,6 +247,7 @@ menu_items:
 
 roles:
   table: warcry_role
+  api: list
   name_field: name
   sort: name
   public:
@@ -132,6 +257,7 @@ roles:
 
 streams:
   table: warcry_streams_items
+  api: full
   name_field: title
   sort: created_at
   reverse: true
@@ -141,16 +267,20 @@ streams:
     - stream_alias
     - type
     - title
-    - comments
+    - description
     - created_at
     - created_by
     - updated_at
     - updated_by
+    - priority
+    - gender_id
+    - channel
   private:
     - published
 
 stream_types:
   table: warcry_streams_types
+  api: list
   name_field: title
   public:
     - id
@@ -159,6 +289,7 @@ stream_types:
 
 users:
   table: new_news_users
+  api: full
   name_field: login
   sort: created_at
   reverse: true

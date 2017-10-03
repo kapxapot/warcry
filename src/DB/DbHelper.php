@@ -3,10 +3,7 @@
 namespace App\DB;
 
 use Warcry\Util\Util;
-
 use Warcry\ORM\Idiorm\DbHelper as DbHelperBase;
-
-use Warcry\Exceptions\ValidationException;
 
 class DbHelper extends DbHelperBase {
 	private function getTableHelper($table) {
@@ -41,15 +38,13 @@ class DbHelper extends DbHelperBase {
 		return $item;
 	}
 
-	public function getMany($table, $options = []) {
-		$exclude = isset($options['exclude'])
-			? $options['exclude']
-			: null;
+	public function getMany($table, $provider, $options = []) {
+		$exclude = $options['exclude'] ?? null;
 
 		$items = $this->selectMany($table, $exclude);
 		
 		if (isset($options['filter'])) {
-			$items = $options['filter']($items, $options['args']);
+			$items = $this->filterBy($items, $options['filter'], $options['args']);
 		}
 
 		$settings = $this->tables[$table];
@@ -67,18 +62,14 @@ class DbHelper extends DbHelperBase {
 		$tableHelper = $this->getTableHelper($table);
 
 		$array = array_filter($array, array($tableHelper, 'canRead'));
-
-		if (isset($options['mutator'])) {
-			$array = array_map($options['mutator'], $array);
-		}
-		
+		$array = array_map(array($provider, 'afterLoad'), $array);
 		$array = array_map(array($this, 'addUserNames'), $array);
 		$array = array_map(array($tableHelper, 'addRights'), $array);
 
 		return array_values($array);
 	}
 
-	protected function beforeSave($request, $table, $data, $id = null) {
+	protected function beforeValidate($request, $table, $data, $id = null) {
 		// unset
 		$canPublish = $this->can($table, 'publish');
 		
@@ -94,18 +85,6 @@ class DbHelper extends DbHelperBase {
 			else {
 				unset($data['password']);
 			}
-		}
-		
-		if (isset($data['points'])) {
-			$data['points'] = implode(',', $data['points']);
-		}
-		
-		// validation
-		$rules = $this->validator->getRulesFor($table, $data, $id);
-		$validation = $this->validator->validate($request, $rules);
-		
-		if ($validation->failed()) {
-			throw new ValidationException($validation->errors);
 		}
 
 		// dirty
@@ -124,15 +103,6 @@ class DbHelper extends DbHelperBase {
 		
 		if ($this->hasField($table, 'updated_by')) {
 			$data['updated_by'] = $user->id;
-		}
-
-		// gallery_pictures
-		if (isset($data['picture'])) {
-			unset($data['picture']);
-		}
-
-		if (isset($data['thumb'])) {
-			unset($data['thumb']);
 		}
 
 		return $data;

@@ -4,17 +4,25 @@ admin_title: Админ
 
 # folders for Twig only
 folders:
+
   # public folder for site's CSS and JS
-  public: /codiad/workspace/warcry_api/public/
+  public: /codiad/workspace/warcry_admin/public/
+
   # public folder for shared libraries (JS)
   lib: /lib/
 
-entity_menu:
-  games: Игры
-  users: Пользователи
-  menus: Меню
-  articles: Статьи
-  gallery_authors: Галерея
-  streams: Стримы
-
 mde: true
+
+admin_menu:
+  - games
+  - users
+  - menus
+  - articles
+  - gallery_authors
+  - streams
+  - group:
+      title: Комиксы
+      items:
+        - comic_series
+        - comic_standalones
+        - comic_publishers

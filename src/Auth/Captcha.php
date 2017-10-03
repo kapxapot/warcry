@@ -10,8 +10,8 @@ class Captcha extends Contained {
 	private $numbers;
 	
 	private $fuckUpReplacements = [
-		'один' => [ 'адын' ],
-		// ..
+		'ард' => [ 'ярд' ],
+		// .. your rules here. mine are mine ;)
 	];
 	
 	public function __construct() {

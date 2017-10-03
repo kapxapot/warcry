@@ -35,12 +35,8 @@
 
 {% block content %}
 	{% include 'modals/entity.twig' %}
-
-	{# include 'includes/smarttable.twig' #}
 	{% include 'includes/datatables.twig' %}
 {% endblock %}
-
-{# block angular_modules %}'smart-table'{% endblock #}
 
 {% block angular_filters %}
 	app.filter('getById', function() {
@@ -58,9 +54,6 @@
 {% endblock %}
 
 {% block angular %}
-	{#$scope.orderByField = '{{ (tables[alias].sort != null) ? tables[alias].sort : 'id' }}';
-	$scope.reverseSort = {{ tables[alias].reverse ? 'true' : 'false' }};#}
-	
 	{% if mde %}
 		$scope.mdes = [];
 		
@@ -116,7 +109,7 @@
 		var initCroppie = function() {
 			if ($scope.croppie) {
 				var i = $scope.item;
-				if (i.picture) {
+				if (i && i.picture) {
 	            	//setTimeout(function() {
 	            		var obj = {
 			                url: i.picture,
@@ -156,7 +149,7 @@
 	
 	{% for col, value in columns if value.entity %}
 		promises.push(new Promise(function(resolve, reject) {
-			$scope.get('/api/v1/{{ value.entity }}')
+			$http.get('/api/v1/{{ value.entity }}')
 				.success(function(data) {
 					$scope.{{ value.entity }} = data;
 					resolve(data);
@@ -196,7 +189,9 @@
 		        },
 		    });
 
-		    $('#upload').on('change', function () { $scope.readFile(this); });
+		    $('#upload').on('change', function () {
+		    	$scope.readFile(this);
+		    });
 		};
 		
 		$scope.croppieHide = function() {
@@ -244,45 +239,17 @@
 
 		$scope.croppieInit();
 	{% endfor %}
-	
-	{#$scope.loadItems = function() {
-		var get = $scope.get('/api/v1/{{ source ?? alias }}');
-		get.success(function(data) {
-			$(data).each(function(index, i) {
-				{% for col, value in columns %}
-					{% if value.type == 'number' %}
-						if (i.{{ col }} != null) {
-							i.{{ col }} = parseInt(i.{{ col }});
-						}
-					{% elseif value.type == 'date' %}
-						if (i.{{ col }} != null) {
-							i.{{ col }} = Date.parse(i.{{ col }});
-						}
-					{% endif %}
-				{% endfor %}
-			});
-	
-			$scope.items = data;
-			
-			console.log(data);
-			
-			$scope.initTable();
-		});
-		
-		return get;
-	};#}
 
 	$scope.initTable = function() {
 		// data tables
 		$scope.table = $('#{{ alias }}-table').DataTable({
 			dom: "<'row'<'col-sm-12'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-6'i><'col-sm-6'l>><'row'<'col-sm-12'p>>", //'ftrilp',
 			language: {
-				url: '{{ folders.public }}/datatables/ru.json'{#//cdn.datatables.net/plug-ins/1.10.15/i18n/Russian.json'#}
+				url: '{{ folders.public }}/datatables/ru.json'
 			},
 			{% if tables[alias].sort_index %}
 				order: [[ {{ tables[alias].sort_index }}, '{{ tables[alias].reverse ? 'desc' : 'asc' }}' ]],
 			{% endif %}
-			{#data: $scope.items,#}
 			ajax: '/api/v1/{{ source ?? alias }}?format=dt',
 	        columns: [
 				{% block table_columns %}
@@ -358,16 +325,6 @@
 		{% endif %}
 	};		
 	
-	{#$scope.setOrder = function(column) {
-		if ($scope.orderByField != column) {
-			$scope.orderByField = column;
-			$scope.reverseSort = false;
-		}
-		else {
-			$scope.reverseSort = !$scope.reverseSort;
-		}
-	};#}
-	
 	$scope.createItem = function() {
 		$('#entityForm')[0].reset();
 		$scope.itemId = 0;
@@ -405,6 +362,11 @@
 			{% if value.readonly is null %}
 				{% if value.type == 'bool' %}
 					$('#entityForm').find('#{{ col }}').prop('checked', i.{{ col }} == 1);
+				{% elseif value.type == 'date' %}
+					var date = parseDate(i.{{ col }});
+					var dateStr = dateToString(date);
+
+					$('#entityForm').find('#{{ col }}').val(dateStr);
 				{% else %}
 					$('#entityForm').find('#{{ col }}').val(i.{{ col }});
 				{% endif %}
@@ -435,7 +397,6 @@
 			$scope.ajax({
 				method: 'delete',
 				url: '/api/v1/{{ alias }}/' + i.id,
-				headers: { Authorization: getToken() },
 				onSuccess: $scope.refresh,
 				message: 'Запись успешно удалена.'
 			});
@@ -448,7 +409,6 @@
 		$scope.ajax({
 			method: ($scope.itemId == 0) ? 'post' : 'put',
 			url: '/api/v1/{{ alias }}' + (($scope.itemId == 0) ? '' : '/' + $scope.itemId),
-			headers: { Authorization: getToken() },
 			data: obj,
 			view: 'entity',
 			onSuccess: $scope.refresh
@@ -500,8 +460,6 @@
 {% endblock %}
 
 {% block js_appendix %}
-	{# Smart Table #}
-	{#<script src="{{ folders.lib }}smart-table/smart-table.min.js"></script>#}
 	{# croppie #}
 	<script src="{{ folders.lib }}croppie/croppie.js"></script>
 {% endblock %}

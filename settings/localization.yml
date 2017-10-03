@@ -25,4 +25,4 @@ fields:
   comment: Заголовок
   title: Название
   stream_id: Код
-  comments: Описание
+  description: Описание

@@ -7,9 +7,8 @@ use Warcry\Validation\Rules\ContainerRule;
 
 class ImageNotEmpty extends ContainerRule {
 	public function validate($input) {
-		$image = new Image();
-		$image->parseBase64($input);
-
+		$image = Image::parseBase64($input);
+		
 		return $image->notEmpty();
 	}
 }

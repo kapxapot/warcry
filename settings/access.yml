@@ -22,6 +22,10 @@ templates:
     editor: [ api_read ]
     author: [ api_read ]
 
+  editor_strict:
+    admin: [ full ]
+    editor: [ edit ]
+
   editor:
     admin: [ full ]
     editor: [ edit ]
@@ -39,6 +43,24 @@ rights:
   article_categories:
     template: admin_api
 
+  comic_issues:
+    template: editor_strict
+
+  comic_pages:
+    template: editor_strict
+
+  comic_publishers:
+    template: admin_api
+
+  comic_series:
+    template: editor_strict
+
+  comic_standalones:
+    template: editor_strict
+
+  comic_standalone_pages:
+    template: editor_strict
+
   games:
     template: admin_api
 
@@ -47,6 +69,9 @@ rights:
 
   gallery_pictures:
     template: public
+
+  genders:
+    template: admin_api
 
   menus:
     template: admin_strict

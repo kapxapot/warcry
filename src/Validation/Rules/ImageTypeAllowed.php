@@ -2,16 +2,15 @@
 
 namespace App\Validation\Rules;
 
-use App\Gallery\Gallery;
-
 use Warcry\File\Image;
 use Warcry\Validation\Rules\ContainerRule;
 
+use App\Gallery\GalleryBase;
+
 class ImageTypeAllowed extends ContainerRule {
 	public function validate($input) {
-		$image = new Image();
-		$image->parseBase64($input);
+		$image = Image::parseBase64($input);
 
-		return array_key_exists($image->imgType, Gallery::IMAGE_TYPES);
+		return array_key_exists($image->imgType, GalleryBase::IMAGE_TYPES);
 	}
 }

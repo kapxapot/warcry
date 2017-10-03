@@ -10,6 +10,8 @@
 		
 			<!-- coded by Sergey Atroshchenko (kapxapot) / gmail / com (c) 2016—{{ 'now'|date('Y') }} -->
 		
+			<base href="{{ path_for('admin.index') }}/">
+		
 			<link href="{{ folders.lib }}bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
 			<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -94,18 +96,16 @@
 						$scope.loading = true;
 					}
 				
-					{# for datatables #}
-					$.ajaxSetup({
-						headers: { Authorization: getToken() }
-					});
-					
-					{# for dictionaries #}
-					$scope.get = function(url) {
-						return $http.get(url, {
-							headers: { Authorization: getToken() }
+					if (hasToken()) {
+						{# for datatables #}
+						$.ajaxSetup({
+							headers: getHeaders()
 						});
+						
+						{# for AngularJS Ajax #}
+						$http.defaults.headers.common = getHeaders();
 					}
-					
+
 					$scope.ajax = function(config) {
 						if (!config.method) {
 							config.method = 'post';
@@ -114,7 +114,7 @@
 						var result = $http(config).then(function(response) {
 							var data = response.data;
 							if (data.error) {
-								$scope.alertError = parseText(data.message, data.format);
+								$scope.alertError = data.message;
 
 								showAlertError();
 
@@ -149,7 +149,7 @@
 						}, function(response) {
 							var data = response.data;
 							if (data.error) {
-								$scope.alertError = parseText(data.message, data.format);
+								$scope.alertError = data.message;
 							}
 							else {
 								$scope.alertError = response.status + ' ' + response.statusText;
@@ -236,7 +236,10 @@
 					    });
 					    
 					    focusOnModals();
-					    $scope.signIn();
+					    
+					    {% if not no_popup %}
+					    	$scope.signIn();
+					    {% endif %}
 					{% else %}
 						$scope.passwordChange = function() {
 							showModal('passwordChange');
@@ -262,13 +265,12 @@
 				}]);
 			</script>
 
-			<div class="footer">&copy; 2016—{{ 'now'|date('Y') }} <a href="//about.me/kapxapot">kapxapot</a></div>
+			<div class="footer">&copy; 2016—{{ 'now'|date('Y') }} <a href="//kapxapot.ru">kapxapot</a></div>
 		</div>
 
 		{% block js %}
     		<script src="{{ folders.lib }}bootstrap/js/bootstrap.min.js"></script>
-    		<script src="{{ folders.lib }}commonmark/commonmark.min.js"></script>
-    		
+
     		{% block js_appendix %}{% endblock %}
     		
 		    <script src="{{ folders.public }}warcry.js"></script>

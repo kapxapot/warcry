@@ -2,11 +2,6 @@
 
 use Respect\Validation\Validator as v;
 
-function dd($a) {
-	var_dump($a);
-	die();
-}
-
 $container['logger'] = function($c) {
     $settings = $c->get('settings')['logger'];
     $logger = new \Monolog\Logger($settings['name']);
@@ -49,31 +44,43 @@ $container['gallery'] = function($c) {
 	return new \App\Gallery\Gallery($c);
 };
 
+$container['comics'] = function($c) {
+	return new \App\Gallery\Comics($c);
+};
+
 $container['view'] = function($c) {
     $settings = $c->get('settings');
     $tws = $settings['view'];
 
-	$loader = new \Twig_Loader_Filesystem(__DIR__ . $tws['templates_path']);
-	$view = new \Twig_Environment($loader, array(
-	    'cache' => $tws['cache_path'],
-	));
-	
+	$templatesPath = __DIR__ . $tws['templates_path'];
+	$cachePath = $tws['cache_path'];
+	if ($cachePath) {
+		$cachePath = __DIR__ . $cachePath;
+	}
+
+	$view = new \Slim\Views\Twig($templatesPath, [
+		'cache' => $cachePath
+	]);
+
 	$view->addExtension(new \Slim\Views\TwigExtension($c->router, $c->request->getUri()));
 	$view->addExtension(new \App\Twig\Extensions\AccessRightsExtension($c));
 	
 	// set globals
     $globals = $settings['view_globals'];
 	foreach ($globals as $key => $value) {
-		$view->addGlobal($key, $value);
+		$view[$key] = $value;
 	}
 
-	$view->addGlobal('auth', [
+	$view['auth'] = [
 		'check' => $c->auth->check(),
 		'user' => $c->auth->getUser(),
 		'role' => $c->auth->getRole()
-	]);
+	];
 	
-	$view->addGlobal('image_types', $c->gallery->buildTypesString());
+	$view['image_types'] = $c->gallery->buildTypesString();
+	
+	$view['tables'] = $settings['tables'];
+	$view['entities'] = $settings['entities'];
 
     return $view;
 };
@@ -102,22 +109,53 @@ $container['PasswordController'] = function($c) {
 	return new \App\Controllers\Auth\PasswordController($c);
 };
 
-$container['db'] = function($c) {
-	$dbs = $c->get('settings')['db'];
-	
-	ORM::configure("mysql:host={$dbs['host']};dbname={$dbs['database']}");
-	ORM::configure("username", $dbs['user']);
-	ORM::configure("password", $dbs['password']);
-	ORM::configure("driver_options", array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
+$dbs = $container->get('settings')['db'];
+
+$container['db'] = function($c) use ($dbs) {
+	\ORM::configure("mysql:host={$dbs['host']};dbname={$dbs['database']}");
+	\ORM::configure("username", $dbs['user']);
+	\ORM::configure("password", $dbs['password']);
+	\ORM::configure("driver_options", array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 	
 	return new \App\DB\DbHelper($c);
 };
 
+$capsule = new \Illuminate\Database\Capsule\Manager;
+$capsule->addConnection([
+	'driver' => 'mysql',
+	'host' => $dbs['host'],
+	'database' => $dbs['database'],
+	'username' => $dbs['user'],
+	'password' => $dbs['password'],
+	'charset' => 'utf8',
+	'collation' => 'utf8_general_ci',
+	'prefix' => '',
+]);
+
+$capsule->setAsGlobal();
+$capsule->bootEloquent();
+
+$container['eloquent'] = function($c) use ($capsule) {
+	return $capsule;
+};
+
 $container['notFoundHandler'] = function($c) {
 	return function($request, $response) use ($c) {
-		$render = $c->view->render('errors/404.twig');
-		$response->write($render);
-		
-		return $response->withStatus(404);
+		return $c->view->render($response, 'errors/404.twig')->withStatus(404);
 	};
+};
+
+if ($debug !== true) {
+	$container['errorHandler'] = function($c) {
+	    return function ($request, $response, $exception = null) use ($c) {
+	    	return $c->db->error($response, $exception);
+	    };
+	};
+}
+
+$container['notAllowedHandler'] = function($c) {
+    return function ($request, $response) use ($c) {
+    	$ex = new \Warcry\Exceptions\AuthenticationException('Недопустимый метод.');
+    	return $c->db->error($response, $ex);
+    };
 };

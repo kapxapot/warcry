@@ -19,9 +19,8 @@ class AccessMiddleware extends Middleware {
 	}
 	
 	public function __invoke($request, $response, $next) {
-		try {
-			$access = $this->container->access;
-			if ($access->checkRights($this->entity, $this->action)) {
+		//try {
+			if ($this->access->checkRights($this->entity, $this->action)) {
 				$response = $next($request, $response);
 			}
 			elseif ($this->redirect) {
@@ -30,10 +29,10 @@ class AccessMiddleware extends Middleware {
 			else {
 				throw new AuthenticationException();
 			}
-		}
+		/*}
 		catch (\Exception $ex) {
 			$this->db->error($response, $ex);
-		}
+		}*/
 				
 		return $response;
 	}

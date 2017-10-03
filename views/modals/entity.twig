@@ -1,5 +1,7 @@
 {% extends 'modal.twig' %}
 
+{% import 'includes/macros.twig' as m %}
+
 {% set modal_name = 'entity' %}
 {% set modal_title = "{{itemId == 0 ? 'Создание' : 'Редактирование'}}" ~ ' ' ~ name_gen %}
 
