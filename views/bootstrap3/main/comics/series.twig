@@ -1,0 +1,36 @@
+{% extends 'main/layout.twig' %}
+
+{% block content %}
+	<div class="panel panel-primary">
+		<div class="panel-heading panel-title">
+		  <span class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ series.name_ru }}{% if series.name_en %} <small>({{ series.name_en }})</small>{% endif %}</span>
+		</div>
+	  	<div class="panel-body breadcrumbs">
+	  		<ol class="breadcrumb">
+	  			<li><a href="{{ path_for('main.index') }}">{{ site_name }}</a></li>
+	  			<li><a href="{{ path_for('main.comics') }}">{{ comics_title }}</a></li>
+	  			<li class="active">{{ series.name_ru }}</li>
+			</ol>
+		</div>
+	  	<div class="panel-body">
+			{% if series.publisher %}
+	  			<p><b>Издательство:</b> <a href="{{ series.publisher.website }}">{{ series.publisher.name }}</a></p>
+			{% endif %}
+			{% if series.description %}
+	  			<p>{{ series.description|raw }}</p>
+			{% endif %}
+			{% if comics %}
+				<div class="flex-wrapper comics">
+					{% for c in comics %}
+						<div class="flex-item flex-item-shaded overlay-wrapper comic-image">
+							<a href="{{ c.page_url }}" title="Выпуск {{ c.number_str }}">
+								<img src="{{ c.cover_url }}" class="card-image" />
+								<span class="overlay overlay-full">Выпуск {{ c.number_str }}</span>
+							</a>
+						</div>
+					{% endfor %}
+				</div>
+			{% endif %}
+	    </div>
+	</div>
+{% endblock %}

@@ -10,7 +10,7 @@ use Warcry\Exceptions\NotFoundException;
 use Warcry\Exceptions\ValidationException;
 use Warcry\Exceptions\AuthenticationException;
 
-use App\Route\Generators\UsersGenerator;
+use App\DB\Tables;
 
 class AuthController extends Controller {
 	public function postSignUp($request, $response) {
@@ -18,9 +18,9 @@ class AuthController extends Controller {
 		
 		$data = $request->getParsedBody();
 
-		$ug = new UsersGenerator($this->container, 'users');
-		//$rules = $this->validator->getRulesFor('users', $data);
-		$rules = $ug->getRules($data);
+		$userGen = $this->resolver->resolveEntity(Tables::USERS);
+
+		$rules = $userGen->getRules($data);
 		$validation = $this->validator->validate($request, $rules);
 		
 		if ($validation->failed()) {
@@ -34,7 +34,7 @@ class AuthController extends Controller {
 			unset($data['captcha']);
 		}
 
-		$user = $this->db->forTable('users')->create();
+		$user = $this->db->forTable(Tables::USERS)->create();
 		$user->set($data);
 		
 		$password = $user->password;
@@ -56,33 +56,28 @@ class AuthController extends Controller {
 	}
 
 	public function postSignIn($request, $response) {
-		//try {
-			$ok = $this->auth->attempt(
-				$request->getParam('login'),
-				$request->getParam('password')
-			);
-			
-			if (!$ok) {
-				throw new AuthenticationException('Пользователь с такими данными не найден.');
-			}
-			else {
-				$this->logger->info("User logged in: {$this->auth->userString()}");
-			
-				$token = $this->auth->getToken();
-
-				$response = $this->db->json($response, [ 'token' => $token->token, 'message' => 'Вы успешно вошли.' ]);
-			}
-		/*}
-		catch (\Exception $ex) {
-			$response = $this->db->error($response, $ex);
-		}*/
+		$ok = $this->auth->attempt(
+			$request->getParam('login'),
+			$request->getParam('password')
+		);
 		
+		if (!$ok) {
+			throw new AuthenticationException('Пользователь с такими данными не найден.');
+		}
+		else {
+			$this->logger->info("User logged in: {$this->auth->userString()}");
+		
+			$token = $this->auth->getToken();
+
+			$response = $this->db->json($response, [ 'token' => $token->token, 'message' => 'Вы успешно вошли.' ]);
+		}
+
 		return $response;
 	}
-	
-	public function getSignOut($request, $response) {
+
+	public function postSignOut($request, $response) {
 		$this->auth->logout();
 		
-		return $response->withRedirect($this->router->pathFor('admin.index'));
+		return $response;
 	}
 }

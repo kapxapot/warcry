@@ -1,0 +1,23 @@
+{% extends 'main/layout.twig' %}
+
+{% set index = true %}
+{% set no_disqus = true %}
+{% set no_social = true %}
+
+{% block content %}
+	<div id="news-index">
+		{% if news %}
+			{% for news_item in news %}
+				<div class="panel panel-primary">
+					<div class="panel-heading panel-title">
+					  <a class="icon-{{ news_item.game.alias }}" href="{{ path_for('main.news', { 'id': news_item.id }) }}" title="[{{ news_item.game.name }}] {{ news_item.title }}">{{ news_item.title }}</a>
+					</div>
+				    {% include 'main/news/bodyfooter.twig' %}
+				</div>
+			{% endfor %}
+		{% else %}
+			<div>По заданным параметрам новостей не найдено. Возможно, эта ссылка сформированна неверно или устарела.</div>
+		{% endif %}
+		{#<div class="all-news"><a href="{{ news_index }}">Все новости &raquo;&raquo;</a></div>#}
+	</div>
+{% endblock %}

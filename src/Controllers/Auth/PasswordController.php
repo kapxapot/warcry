@@ -29,7 +29,7 @@ class PasswordController extends Controller {
 		
 		$this->logger->info("Changed password for user: {$this->auth->userString()}");
 
-		$response = $this->db->json($response, [ 'message' => 'Password successfully changed.' ]);
+		$response = $this->db->json($response, [ 'message' => 'Пароль успешно изменен.' ]);
 
 		return $response;
 	}

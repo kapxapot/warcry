@@ -1,0 +1,17 @@
+{% extends 'main/layout.twig' %}
+
+{% block content %}
+	<div class="panel panel-primary">
+		<div class="panel-heading panel-title">
+		  <span class="icon-{{ news_item.game.alias }}" title="[{{ news_item.game.name }}] {{ news_item.title }}">{{ news_item.title }}</span>
+		</div>
+	  	<div class="panel-body breadcrumbs">
+	  		<ol class="breadcrumb">
+	  			<li><a href="/">{{ site_name }}</a></li>
+	  			{% if not news_item.game.default %}<li><a href="{{ news_item.game.url }}">{{ news_item.game.name }}</a></li>{% endif %}
+	  			<li class="active">{{ news_item.title }}</li>
+			</ol>
+		</div>
+	    {% include 'main/news/bodyfooter.twig' %}
+	</div>
+{% endblock %}

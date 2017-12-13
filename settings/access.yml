@@ -79,6 +79,9 @@ rights:
   menu_items:
     template: admin_strict
 
+  news:
+    template: public
+
   roles:
     template: admin_api
 

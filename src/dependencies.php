@@ -48,6 +48,14 @@ $container['comics'] = function($c) {
 	return new \App\Gallery\Comics($c);
 };
 
+$container['resolver'] = function($c) {
+	return new \App\Route\GeneratorResolver($c);
+};
+
+$container['cases'] = function($c) {
+	return new \Warcry\Util\Cases($c);
+};
+
 $container['view'] = function($c) {
     $settings = $c->get('settings');
     $tws = $settings['view'];
@@ -139,23 +147,44 @@ $container['eloquent'] = function($c) use ($capsule) {
 	return $capsule;
 };
 
+// legacy
+
+$container['legacyDecorator'] = function($c) {
+	return new \App\Legacy\Decorator($c);
+};
+
+$container['builder'] = function($c) {
+	return new \App\Legacy\Builder($c);
+};
+
+$container['legacyRouter'] = function($c) {
+	return new \App\Legacy\Router($c);
+};
+
+$container['legacyArticleParser'] = function($c) {
+	return new \App\Legacy\Parsing\ArticleParser($c);
+};
+
+$container['legacyNewsParser'] = function($c) {
+	return new \App\Legacy\Parsing\NewsParser($c);
+};
+
+$container['legacyForumParser'] = function($c) {
+	return new \App\Legacy\Parsing\ForumParser($c);
+};
+
+// handlers
+
 $container['notFoundHandler'] = function($c) {
-	return function($request, $response) use ($c) {
-		return $c->view->render($response, 'errors/404.twig')->withStatus(404);
-	};
+	return new \App\Handlers\NotFoundHandler($c);
 };
 
 if ($debug !== true) {
 	$container['errorHandler'] = function($c) {
-	    return function ($request, $response, $exception = null) use ($c) {
-	    	return $c->db->error($response, $exception);
-	    };
+		return new \App\Handlers\ErrorHandler($c);
 	};
 }
 
 $container['notAllowedHandler'] = function($c) {
-    return function ($request, $response) use ($c) {
-    	$ex = new \Warcry\Exceptions\AuthenticationException('Недопустимый метод.');
-    	return $c->db->error($response, $ex);
-    };
+	return new \App\Handlers\NotAllowedHandler($c);
 };

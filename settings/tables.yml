@@ -109,6 +109,8 @@ comic_series:
     - updated_at
     - updated_by
     - description
+  private:
+    - published
 
 comic_standalones:
   table: comic_standalone
@@ -148,6 +150,21 @@ comic_standalone_pages:
     - published
     - type
 
+forums:
+  table: forumforums
+
+forum_members:
+  table: forummembers
+
+forum_posts:
+  table: forumposts
+
+forum_tags:
+  table: forumcore_tags
+
+forum_topics:
+  table: forumtopics
+
 gallery_authors:
   table: gallery_authors
   api: full
@@ -166,6 +183,8 @@ gallery_authors:
     - created_by
     - updated_at
     - updated_by
+  private:
+    - published
 
 gallery_pictures:
   table: gallery_pictures
@@ -215,6 +234,12 @@ genders:
     - name
     - tag
 
+items:
+  table: wow_items_new
+
+locations:
+  table: enc_loc
+
 menus:
   table: wow_menu_sections
   api: full
@@ -245,6 +270,41 @@ menu_items:
     - created_at
     - updated_at
 
+news:
+  table: news
+  api: full
+  name_field: title
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - game_id
+    - title
+    - text
+    - tags
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+  private:
+    - published
+    - published_at
+
+npc:
+  table: enc_npc
+
+quests:
+  table: enc_spells
+
+replaces:
+  table: enc_replace
+
+recipes:
+  table: wow_recipes
+
+recipe_sources:
+  table: wow_recipe_sources
+
 roles:
   table: warcry_role
   api: list
@@ -254,6 +314,15 @@ roles:
     - id
     - name
     - tag
+
+skills:
+  table: wow_skills
+
+spells:
+  table: enc_spells
+
+spell_icons:
+  table: wow_spell_icons
 
 streams:
   table: warcry_streams_items
@@ -275,8 +344,13 @@ streams:
     - priority
     - gender_id
     - channel
+    - official
+    - official_ru
   private:
     - published
+
+stream_stats:
+  table: stream_stats
 
 stream_types:
   table: warcry_streams_types

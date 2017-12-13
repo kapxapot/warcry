@@ -19,6 +19,9 @@ $settings['db'] = [
 	'password' => getenv('DB_PASSWORD'),
 ];
 
+$settings['twitch']['client_id'] = getenv('TWITCH_CLIENT_ID');
+$settings['telegram']['bot_token'] = getenv('TELEGRAM_BOT_TOKEN');
+
 if (array_key_exists('tables', $settings)) {
 	foreach ($settings['tables'] as $table => $tableSettings) {
 		$public = $tableSettings['public'] ?? [];

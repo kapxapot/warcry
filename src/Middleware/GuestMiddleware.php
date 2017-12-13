@@ -2,12 +2,10 @@
 
 namespace App\Middleware;
 
-use Warcry\Slim\Middleware\Middleware;
-
-class GuestMiddleware extends Middleware {
+class GuestMiddleware extends HomeMiddleware {
 	public function __invoke($request, $response, $next) {
 		if ($this->auth->check()) {
-			return $response->withRedirect($this->router->pathFor('admin.index'));
+			return $response->withRedirect($this->homePath);
 		}
 
 		$response = $next($request, $response);

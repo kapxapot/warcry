@@ -1,0 +1,101 @@
+{% extends 'main/layout.twig' %}
+
+{% import 'main/macros.twig' as m %}
+{% import _self as l %}
+
+{% macro recipe_tree(recipe, top = false) %}
+	{% import 'main/macros.twig' as m %}
+	{% import _self as l %}
+
+    <div id="recipe_{{ recipe.node_id }}"{% if not top %} class="hidden"{% endif %}>
+	    <div class="flex-wrapper">
+	    	{% if not top %}
+				<a class="recipe-node-arrow" href="javascript:void(0);" ng-click="hideSubTree('{{ recipe.node_id }}');" title="Свернуть"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a>
+			{% endif %}
+	    	{{ m.recipe_icon(recipe.link) }}
+	    	{{ m.recipe_link(recipe, top) }}
+	       	{{ m.total_count(recipe.total_min, recipe.total_max) }}
+	    </div>
+	
+		{% if recipe.reagents %}
+			<ul>
+			    {% for r in recipe.reagents %}
+			        <li>
+			        	<div{% if r.recipe %} id="item_{{ r.recipe.node_id }}"{% endif%} class="flex-wrapper{% if not r.recipe %} recipe-tree-leaf{% endif %}">
+			        		{% if r.recipe %}
+			        			<a class="recipe-node-arrow" href="javascript:void(0);" ng-click="showSubTree('{{ r.recipe.node_id }}');" title="Развернуть"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+			        		{% endif %}
+			            	{{ m.recipe_icon(r) }}
+			            	{{ m.item_link(r.item) }}
+			            	{{ m.total_count(r.total_min, r.total_max) }}
+			            </div>
+			            
+			            {% if r.recipe %}
+		                	{{ l.recipe_tree(r.recipe) }}
+		                {% endif %}
+			        </li>
+			    {% endfor %}
+	    	</ul>
+	    {% endif %}
+	</div>
+{% endmacro %}
+
+{% block content %}
+	<div class="panel panel-primary">
+		<div class="panel-heading panel-title">
+		  <span class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ recipe.name_ru }}{% if recipe.name != recipe.name_ru %} <small>({{ recipe.name }})</small>{% endif %}</span>
+		</div>
+	  	<div class="panel-body breadcrumbs">
+	  		<ol class="breadcrumb">
+	  			<li><a href="{{ path_for('main.index') }}">{{ site_name }}</a></li>
+	  			<li><a href="{{ path_for('main.recipes') }}">{{ recipes_title }}</a></li>
+	  			<li>{{ m.skill_link(recipe.skill_id, recipe.skill) }}</li>
+	  			<li class="active">{{ recipe.name_ru }}</li>
+			</ol>
+		</div>
+	  	<div class="panel-body">
+	  		<p>Требует: {{ m.skill_link(recipe.skill_id, recipe.skill) }} ({{ recipe.learnedat }})</p>
+	  		<p>
+	  			Сложность:
+				{% for color, level in recipe.levels if level > 0 %}
+					<span class="label recipe-lvl-{{ color }}">{{ level }}</span>
+				{% endfor %}
+			</p>
+	  		
+	  		{#<p class="nd_subtitle">Схема производства</p>#}
+	  		
+	  		<div class="recipe-tree">
+				{{ l.recipe_tree(recipe, true) }}
+	  		</div>
+
+	  		{#<p class="nd_subtitle">Делаем с нуля</p>#}
+
+	  		<div class="recipe-base">
+		  		<p>Чтобы сделать этот предмет из <b>базовых реагентов</b>, понадобится следующее:</p>
+		  		
+				<ul>
+				    {% for r in recipe.base_reagents %}
+				        <li>
+				        	<div class="flex-wrapper">
+				            	{{ m.recipe_icon(r, true) }}
+				            	<span class="item-flat-name"><a href="{{ r.item.url }}" class="item-name item-q{{ r.item.quality }}">{{ r.item.name_ru }}</a>{% if r.total_min > 1 or r.total_min < r.total_max %} ({{ m.total_count_str(r.total_min, r.total_max) }}){% endif %}</span>
+				            </div>
+				        </li>
+				    {% endfor %}
+		    	</ul>
+			</div>
+			
+			<p class="recipe-required-skills">Для этого потребу{% if recipe.required_skills|length > 1 %}ю{% else %}е{% endif %}тся {% for id, skill in recipe.required_skills %}{% if not loop.first %}{% if loop.last %} и {% else %}, {% endif %}{% endif %}<span class="nowrap">{{ m.skill_link(id, skill.skill) }} ({{ skill.max }})</span>{% endfor %}.</p>
+		</div>
+	</div>
+{% endblock %}
+
+{% set more_angular %}
+	$scope.hideSubTree = function(id) {
+		switchElements('#recipe_' + id, '#item_' + id);
+	}
+	
+	$scope.showSubTree = function(id) {
+		switchElements('#item_' + id, '#recipe_' + id);
+	}
+{% endset %}

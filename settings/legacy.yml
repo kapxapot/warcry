@@ -1,0 +1,81 @@
+forum:
+  index: /forum
+  page: /forum/index.php
+  news_index: 6
+
+articles:
+  root_id: 0
+  #root_url: /
+  page: /article
+  description_limit: 2000
+
+recipes:
+  title: Рецепты
+  page_size: 15
+  game: warcraft
+  default_icon: inv_misc_questionmark
+  index: /recipes
+  images:
+    icon_border: /images/icon_border_medium.gif
+
+gallery:
+  title: Галерея
+  pictures_index: /gallery/pictures
+  thumbs_index: /gallery/pictures/thumb
+  pics_per_page: 20
+  forum_topic: 3443
+
+map:
+  title: Карта сайта
+
+streams:
+  title: Стримы
+
+  # in days
+  ttl: 14
+  
+  # in minutes
+  stats_ttl: 10
+
+  priority_games:
+    - world of warcraft
+    - hearthstone
+    - overwatch
+    - heroes of the storm
+    - starcraft
+    - starcraft ii
+    - warcraft iii
+    - warcraft iii: the frozen throne
+    - diablo iii
+    - diablo iii: reaper of souls
+    - diablo ii
+    - diablo ii: lord of destruction
+
+comics:
+  title: Комиксы
+  pages_index: /comics/pages
+  thumbs_index: /comics/pages/thumb
+
+news:
+  description_limit: 2000
+
+news_limit: 7
+rss_limit: 20
+
+sidebar:
+  article_limit: 7
+  forum_topic_limit: 7
+  latest_news_limit: 7
+
+default_game_id: 5
+hidden_forum_ids:
+  - 3
+
+date_format: %d.%m.%Y
+time_format: %d.%m.%Y %H:%M
+
+screenshot_dir: /images/screenshots/
+
+webdb_link: 'http://wowhead.com/'
+webdb_ru_link: 'http://ru.wowhead.com/'
+hsdb_ru_link: '//ru.hearthhead.com/'

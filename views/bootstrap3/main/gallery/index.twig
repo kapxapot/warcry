@@ -1,0 +1,31 @@
+{% extends 'main/layout.twig' %}
+
+{% block content %}
+	<div class="panel panel-primary">
+		<div class="panel-heading panel-title">
+		  <span class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ title }}</span>
+		</div>
+	  	<div class="panel-body breadcrumbs">
+	  		<ol class="breadcrumb">
+	  			<li><a href="{{ path_for('main.index') }}">{{ site_name }}</a></li>
+	  			<li class="active">{{ title }}</li>
+			</ol>
+		</div>
+	  	<div class="panel-body">
+	  		<p>В этом разделе собраны картинки на тему игр <b>Blizzard</b>, присланные нам на сайт или опубликованные на <a href="{{ forum_index }}">форуме</a> (а также позаимствованные из портфолио художников). У нас вы можете найти как фан-арт, так и официальные работы, права на которые принадлежат <b>Blizzard</b>. Некоторые из художников начинали публиковать свои работы здесь, а теперь официально рисуют для любимой компании!</p>
+	  		<p>Если вы хотите опубликовать здесь свои работы, присылайте их <a href="mailto:{{ team_mail }}">по почте</a> или публикуйте на форуме <a href="{{ forum_topic }}">в специальной теме</a>.</p>
+			<div id="gallery" class="flex-wrapper">
+				{% for a in authors %}
+					<div class="flex-item flex-item-shaded overlay-wrapper">
+						{% if a.last_thumb_url %}
+							<a href="{{ a.page_url }}" title="{{ a.name }}: {{ a.count }} {{ a.pictures_str }}">
+								<img src="{{ a.last_thumb_url }}" class="card-image" />
+								<span class="overlay overlay-full">{{ a.name }} ({{ a.count }})</span>
+							</a>
+						{% endif %}
+					</div>
+				{% endfor %}
+			</div>
+	    </div>
+	</div>
+{% endblock %}

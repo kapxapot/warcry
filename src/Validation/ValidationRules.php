@@ -41,6 +41,9 @@ class ValidationRules extends Contained {
 			'extendedAlias' => function() use ($solid) {
 				return $solid()->regex('/^[\w]+$/');
 			},
+			'nullableAlias' => function() {
+				return v::noWhitespace();
+			},
 			'text' => function() use ($notEmpty) {
 				return $notEmpty();
 			},

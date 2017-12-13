@@ -37,4 +37,9 @@ require $src . 'dependencies.php';
 require $src . 'middleware.php';
 require $src . 'routes.php';
 
+// temp
+$lib = __DIR__ . $container->get('settings')['folders']['lib'];
+
+require $lib . 'feed-creator.php';
+
 $app->run();

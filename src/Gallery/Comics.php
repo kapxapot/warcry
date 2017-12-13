@@ -13,8 +13,6 @@ class Comics extends GalleryBase {
 			'fields' => [
 				'picture_type' => 'type',
 				'thumb_type' => 'type',
-				//'picture' => 'picture',
-				//'thumb' => 'thumb',
 			],
 			'folders' => [
 				'picture' => [

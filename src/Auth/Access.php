@@ -47,7 +47,7 @@ class Access extends Contained {
 
 	public function checkRights($entity, $action) {
 		if (!isset($this->actions[$action])) {
-			throw new \InvalidArgumentException('Неизвестное действие: ' . $action);
+			throw new \InvalidArgumentException('Unknown action: ' . $action);
 		}
 		
 		$grantAccess = false;
@@ -56,7 +56,7 @@ class Access extends Contained {
 		$roleTag = $role->tag;
 		
 		if (!isset($this->rights[$entity])) {
-			throw new ApplicationException('Не настроены права доступа для сущности ' . $entity);
+			throw new ApplicationException('You must configure access rights for entity "' . $entity . '"');
 		}
 		
 		$rights = $this->rights[$entity];
@@ -78,7 +78,7 @@ class Access extends Contained {
 			$tname = $rights['template'];
 
 			if (!isset($this->templates[$tname])) {
-				throw new ApplicationException('Неизвестный шаблон прав доступа: ' . $tname);
+				throw new ApplicationException('Unknown access rights template: ' . $tname);
 			}
 			
 			$template = $this->templates[$tname];

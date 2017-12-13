@@ -1,0 +1,21 @@
+<div class="panel-body news">
+	{{ news_item.text|raw }}
+</div>
+<div class="panel-footer">
+	<div class="glyphicon-block"><span class="glyphicon glyphicon-time" aria-hidden="true"></span> {{ news_item.start_date }}</div>
+	<div class="glyphicon-block"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> <a href="{{ news_item.starter_url }}">{{ news_item.starter_name }}</a></div>
+	{% if news_item.forum_url %}
+		<div class="glyphicon-block"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span> <a href="{{ news_item.forum_url }}" title="Комментарии на форуме">{{ news_item.posts }}</a></div>
+	{% endif %}
+	{% if news_item.tags %}
+		<div class="glyphicon-block"><span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
+    		{% for tag in news_item.tags %}
+    			{% if tag.url %}
+    				<a href="{{ tag.url }}" title="Тег: {{ tag.text }}" class="label label-default">{{ tag.text }}</a>
+    			{% else %}
+    				<span class="label label-default">{{ tag.text }}</span>
+    			{% endif %}
+    		{% endfor %}
+		</div>
+	{% endif %}
+</div>

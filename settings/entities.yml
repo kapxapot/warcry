@@ -143,7 +143,7 @@ comic_issues:
     comic_pages:
       name: Страницы
       template: >
-        '<a href="comic_issues/' + row.id + '/comic_pages"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-cog" title="Редактировать страницы"></span></button></a>'
+        '<a href="comic_issues/' + row.id + '/comic_pages"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-picture" title="Редактировать страницы"></span></button></a>'
       attributes: [ no_sort, readonly ]
 
 
@@ -258,6 +258,12 @@ comic_series:
       type: html
       attributes: [ nullable, hidden ]
 
+    published:
+      name: Публичная
+      form_name: Опубликовать
+      type: bool
+      access: publish
+
     created_by_name:
       name: Пользователь
       attributes: [ readonly ]
@@ -270,7 +276,7 @@ comic_series:
     comic_issues:
       name: Комиксы
       template: >
-        '<a href="comic_series/' + row.id + '/comic_issues"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-cog" title="Редактировать комиксы"></span></button></a>'
+        '<a href="comic_series/' + row.id + '/comic_issues"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-book" title="Редактировать комиксы"></span></button></a>'
       attributes: [ no_sort, readonly ]
 
 
@@ -341,7 +347,7 @@ comic_standalones:
     comic_standalone_pages:
       name: Страницы
       template: >
-        '<a href="comic_standalones/' + row.id + '/comic_standalone_pages"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-cog" title="Редактировать страницы"></span></button></a>'
+        '<a href="comic_standalones/' + row.id + '/comic_standalone_pages"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-picture" title="Редактировать страницы"></span></button></a>'
       attributes: [ no_sort, readonly ]
 
 
@@ -429,6 +435,12 @@ gallery_authors:
       name: Описание
       type: html
       attributes: [ nullable, hidden ]
+        
+    published:
+      name: Публичный
+      form_name: Опубликовать
+      type: bool
+      access: publish
 
     created_by_name:
       name: Пользователь
@@ -442,7 +454,7 @@ gallery_authors:
     gallery_pictures:
       name: Картинки
       template: >
-        '<a href="gallery/' + row.id + '/gallery_pictures"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-cog" title="Редактировать картинки"></span></button></a>'
+        '<a href="gallery/' + row.id + '/gallery_pictures"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-picture" title="Редактировать картинки"></span></button></a>'
       attributes: [ no_sort, readonly ]
 
 
@@ -585,7 +597,7 @@ menus:
     menu_items:
       name: Подменю
       template: >
-        '<a href="menus/' + row.id + '/menu_items"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-cog" title="Редактировать элементы меню"></span></button></a>'
+        '<a href="menus/' + row.id + '/menu_items"><button type="button" class="btn btn-success btn-pad"><span class="glyphicon glyphicon-align-justify" title="Редактировать элементы меню"></span></button></a>'
       attributes: [ no_sort, readonly ]
 
 
@@ -614,6 +626,59 @@ menu_items:
       name: Позиция
       type: number
       default: 1
+    
+    created_at:
+      name: Дата создания
+      type: date
+      attributes: [ readonly ]
+
+
+news:
+
+  name_gen: новости
+  name_accus: новость
+  title: Новости
+
+  columns:
+    id:
+      name: id
+      attributes: [ readonly ]
+
+    game_id:
+      name: Игра
+      entity: games
+
+    title:
+      name: Заголовок
+      template: >
+        '<a href="/main/news/' + row.id + '" target="_blank">' + row.title + '</a>'
+
+    text:
+      name: Текст
+      type: html
+      attributes: [ hidden ]
+
+    tags:
+      name: Теги
+      attributes: [ nullable, hidden ]
+      tooltip: Через запятую
+
+    published:
+      name: Публичная
+      form_name: Опубликовать
+      type: bool
+      access: publish
+
+    published_at:
+      name: Дата публикации
+      type: datetime-local
+      attributes: [ nullable, hidden ]
+      access: publish
+      tooltip: Оставьте пустой для автозаполнения.
+
+    created_by_name:
+      name: Пользователь
+      attributes: [ readonly ]
     
     created_at:
       name: Дата создания
@@ -672,18 +737,30 @@ streams:
       attributes: [ hidden ]
       tooltip: Канал это не стример, не человек.
 
-    published:
-      name: Публичный
-      form_name: Опубликовать
-      type: bool
-      access: publish
-
     priority:
       name: Приоритетный
       type: bool
       access: publish
       attributes: [ hidden ]
       tooltip: Приоритетные стримы выводятся в топ.
+
+    official:
+      name: Официальный
+      type: bool
+      access: publish
+      attributes: [ hidden ]
+
+    official_ru:
+      name: Официальный русскоязычный
+      type: bool
+      access: publish
+      attributes: [ hidden ]
+
+    published:
+      name: Публичный
+      form_name: Опубликовать
+      type: bool
+      access: publish
 
     created_by_name:
       name: Пользователь
@@ -713,6 +790,7 @@ users:
     name:
       name: Отображаемое имя
       attributes: [ nullable, hidden ]
+      tooltip: По умолчанию совпадает с логином.
 
     email:
       name: E-mail
@@ -726,6 +804,7 @@ users:
     forum_name:
       name: Имя на форуме
       attributes: [ nullable, hidden ]
+      tooltip: По умолчанию совпадает с логином.
 
     password:
       name: Пароль

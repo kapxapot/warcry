@@ -6,6 +6,8 @@ use Warcry\Util\Util;
 use Warcry\Contained;
 use Warcry\Exceptions\AuthenticationException;
 
+use App\DB\Tables;
+
 class Auth extends Contained {
 	private $user;
 	private $role;
@@ -30,7 +32,7 @@ class Auth extends Contained {
 		if (!$this->user) {
 			$id = $_SESSION['user'];
 			if ($id != null) {
-				$user = $this->db->forTable('users')->findOne($id);
+				$user = $this->db->forTable(Tables::USERS)->findOne($id);
 				if (empty($user->name)) {
 					$user->name = $user->login;
 				}
@@ -47,7 +49,7 @@ class Auth extends Contained {
 			$user = $this->getUser();
 			if ($user) {
 				$id = $user->role_id;
-				$this->role = $this->db->forTable('roles')->findOne($id);
+				$this->role = $this->db->forTable(Tables::ROLES)->findOne($id);
 			}
 		}
 		
@@ -58,7 +60,7 @@ class Auth extends Contained {
 		if (!$this->token) {
 			$id = $_SESSION['token'];
 			if ($id != null) {
-				$this->token = $this->db->forTable('auth_tokens')->findOne($id);
+				$this->token = $this->db->forTable(Tables::AUTH_TOKENS)->findOne($id);
 			}
 		}
 		
@@ -84,10 +86,12 @@ class Auth extends Contained {
 	}
 	
 	public function attempt($login, $password) {
-		$user = $this->db->forTable('users')
-			->where_any_is(array(
-                array('login' => $login),
-                array('email' => $login)))
+		$user = $this->db
+			->forTable(Tables::USERS)
+			->whereAnyIs([
+                [ 'login' => $login ],
+                [ 'email' => $login ],
+            ])
 			->findOne();
 		
 		$ok = false;
@@ -99,13 +103,10 @@ class Auth extends Contained {
 					$user->save();
 				}
 				
-				$token = $this->db->forTable('auth_tokens')->create();
+				$token = $this->db->forTable(Tables::AUTH_TOKENS)->create();
 				$token->user_id = $user->id;
 				$token->token = Util::generateToken();
-				
-				$settings = $this->getSettings();
-				$ttl = $settings['token_ttl'];
-				$token->expires_at = Util::generateExpirationTime($ttl * 60);
+				$token->expires_at = $this->generateExpirationTime();
 				
 				$token->save();
 
@@ -122,11 +123,16 @@ class Auth extends Contained {
 		unset($_SESSION['token']);
 		unset($_SESSION['user']);
 	}
+	
+	private function generateExpirationTime() {
+		$ttl = $this->getSettings('token_ttl');
+		return Util::generateExpirationTime($ttl * 60);
+	}
 
 	public function validateToken($tokenStr) {
 		$token = $this->getToken();
 		if (!$token || $token->token != $tokenStr) {
-			$token = $this->db->forTable('auth_tokens')
+			$token = $this->db->forTable(Tables::AUTH_TOKENS)
 				->where('token', $tokenStr)
 				->findOne();
 			
@@ -138,7 +144,7 @@ class Auth extends Contained {
 			}
 		}
 			
-		$token->expires_at = Util::generateExpirationTime();
+		$token->expires_at = $this->generateExpirationTime();
 		
 		$token->save();
 

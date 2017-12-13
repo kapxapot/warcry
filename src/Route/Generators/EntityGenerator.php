@@ -99,19 +99,19 @@ class EntityGenerator extends Contained {
 		$fullPath = '/' . $alias . '/{id:\d+}';
 
 		$get = $app->get($fullPath, function ($request, $response, $args) use ($table, $provider) {
-			return $this->db->get($response, $table, $args['id'], $provider);
+			return $this->db->apiGet($response, $table, $args['id'], $provider);
 		});
 		
 		$post = $app->post($shortPath, function ($request, $response, $args) use ($table, $provider) {
-			return $this->db->create($request, $response, $table, $provider);
+			return $this->db->apiCreate($request, $response, $table, $provider);
 		});
 		
 		$put = $app->put($fullPath, function ($request, $response, $args) use ($table, $provider) {
-			return $this->db->update($request, $response, $table, $args['id'], $provider);
+			return $this->db->apiUpdate($request, $response, $table, $args['id'], $provider);
 		});
 		
 		$delete = $app->delete($fullPath, function ($request, $response, $args) use ($table, $provider) {
-			return $this->db->delete($response, $table, $args['id'], $provider);
+			return $this->db->apiDelete($response, $table, $args['id'], $provider);
 		});
 		
 		if ($access) {
@@ -141,7 +141,7 @@ class EntityGenerator extends Contained {
 
 			$params = $provider->getAdminParams($params, $args);
 
-			return $this->view->render($response, $templateName . '.twig', $params);
+			return $this->view->render($response, 'admin/' . $templateName . '.twig', $params);
 		})->add($access($alias, 'read_own', 'admin.index'))->setName('admin.' . $alias);
 		
 		return $this;

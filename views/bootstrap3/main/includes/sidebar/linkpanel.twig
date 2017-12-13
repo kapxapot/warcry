@@ -1,0 +1,10 @@
+{% if linkpanel_links %}
+	<div class="panel panel-primary">
+		<div class="panel-heading panel-title">{{ linkpanel_title }}</div>
+		<div class="panel-body linkblock">
+			{% for link in linkpanel_links %}
+		  		<a class="icon-{{ link.game.alias }}" title="[{{ link.game.name }}] {{ link.title|raw }}" href="{{ link.url }}">{{ link.title|raw }}{% if link.posts %} ({{ link.posts }}){% endif %}</a>
+			{% endfor %}
+		</div>
+	</div>
+{% endif %}

@@ -13,10 +13,11 @@ login_max: 20
 # auth
 captcha_digits: 3
 # in hours
-token_ttl: 1
+token_ttl: 168
 
 # folders for PHP code
 folders:
+  lib: /../../../../lib/
   gallery_pictures: /../../../../../gallery/pictures/
   gallery_thumbs: /../../../../../gallery/pictures/thumb/
   gallery_pictures_public: /gallery/pictures/
@@ -25,14 +26,22 @@ folders:
   comics_thumbs: /../../../../../comics/pages/thumb/
   comics_pages_public: /comics/pages/
   comics_thumbs_public: /comics/pages/thumb/
+  rss_cache: /../../../cache/
 
 logger:
   name: slim-app
   path: /../logs/app.log
 
 view:
-  templates_path: /../views/
+  templates_path: /../views/bootstrap3/
   cache_path: false
+
+telegram:
+  channels:
+    warcry: warcry_ru
+    blizzard_streams: blizzard_streams
+    blizzard_streams_ru: blizzard_streams_ru
+    warcry_streams: warcry_streams
 
 modules:
   - view_globals
@@ -40,3 +49,4 @@ modules:
   - entities
   - access
   - localization
+  - legacy
