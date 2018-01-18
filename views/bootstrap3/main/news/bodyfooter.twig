@@ -2,13 +2,13 @@
 	{{ news_item.text|raw }}
 </div>
 <div class="panel-footer">
-	<div class="glyphicon-block"><span class="glyphicon glyphicon-time" aria-hidden="true"></span> {{ news_item.start_date }}</div>
-	<div class="glyphicon-block"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> <a href="{{ news_item.starter_url }}">{{ news_item.starter_name }}</a></div>
+	<div class="glyphicon-block"><span class="glyphicon glyphicon-time" aria-hidden="true" title="Дата публикации"></span> {{ news_item.start_date ?? 'Не опубликована!' }}</div>
+	<div class="glyphicon-block"><span class="glyphicon glyphicon-user" aria-hidden="true" title="Автор"></span> {% if news_item.starter_url %}<a href="{{ news_item.starter_url }}">{{ news_item.starter_name }}</a>{% else %}<b>{{ news_item.starter_name }}</b>{% endif %}</div>
 	{% if news_item.forum_url %}
 		<div class="glyphicon-block"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span> <a href="{{ news_item.forum_url }}" title="Комментарии на форуме">{{ news_item.posts }}</a></div>
 	{% endif %}
 	{% if news_item.tags %}
-		<div class="glyphicon-block"><span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
+		<div class="glyphicon-block"><span class="glyphicon glyphicon-tag" aria-hidden="true" title="Теги"></span>
     		{% for tag in news_item.tags %}
     			{% if tag.url %}
     				<a href="{{ tag.url }}" title="Тег: {{ tag.text }}" class="label label-default">{{ tag.text }}</a>

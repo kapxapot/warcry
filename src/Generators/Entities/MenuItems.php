@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Route\Generators\Entities;
+namespace App\Generators\Entities;
 
-use App\Route\Generators\EntityGenerator;
+use App\Generators\EntityGenerator;
 
 class MenuItems extends EntityGenerator {
 	public function getRules($data, $id = null) {
@@ -20,14 +20,16 @@ class MenuItems extends EntityGenerator {
 		];
 	}
 	
-	public function getAdminParams($params, $args) {
+	public function getAdminParams($args) {
+		$params = parent::getAdminParams($args);
+
 		$menuId = $args['id'];
 		$menu = $this->db->getEntityById('menus', $menuId);
 		$game = $this->db->getEntityById('games', $menu['game_id']);
 		
 		$params['source'] = "menus/{$menuId}/menu_items";
 		$params['breadcrumbs'] = [
-			[ 'text' => 'Меню', 'link' => $this->router->pathFor('admin.menus') ],
+			[ 'text' => 'Меню', 'link' => $this->router->pathFor('admin.entities.menus') ],
 			[ 'text' => $game ? $game['name'] : '(нет игры)' ],
 			[ 'text' => $menu['text'] ],
 			[ 'text' => 'Элементы меню' ],

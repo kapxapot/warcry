@@ -21,13 +21,12 @@ class NewsController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $filterByGame,
-			'sidebar' => [ 'stream', 'forum', 'articles' ],
+			'sidebar' => [ 'stream', 'create.news', 'forum', 'articles' ],
 			'params' => [
-				//'news_index' => $this->legacyRouter->forumNewsIndex(),
 				'news' => $news,
 			],
 		]);
-	
+		
 		return $this->view->render($response, 'main/news/index.twig', $params);
 	}
 
@@ -48,7 +47,7 @@ class NewsController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $news['game'],
-			'sidebar' => [ 'stream', 'news', 'forum' ],
+			'sidebar' => [ 'stream', 'news', 'create.news', 'forum' ],
 			'news_id' => $id,
 			'params' => [
 				'disqus_url' => $this->legacyRouter->disqusNews($id),
@@ -58,8 +57,43 @@ class NewsController extends BaseController {
 				'page_description' => $news['description'],
 			],
 		]);
-
+		
 		return $this->view->render($response, 'main/news/item.twig', $params);
+	}
+
+	public function archiveIndex($request, $response, $args) {
+		$years = $this->builder->buildNewsYears();
+		
+		$params = $this->buildParams([
+			'sidebar' => [ 'stream', 'create.news' ],
+			'params' => [
+				'title' => 'Архив новостей', 
+				'years' => $years,
+			],
+		]);
+	
+		return $this->view->render($response, 'main/news/archive/index.twig', $params);
+	}
+	
+	public function archiveYear($request, $response, $args) {
+		$year = $args['year'];
+
+		if (strlen($year) > 0 && !is_numeric($year)) {
+			return $this->notFound($request, $response);
+		}
+
+		$monthly = $this->builder->buildNewsArchive($year);
+		
+		$params = $this->buildParams([
+			'sidebar' => [ 'stream', 'create.news' ],
+			'params' => [
+				'title' => "Архив новостей за {$year} год", 
+				'archive_year' => $year,
+				'monthly' => $monthly,
+			],
+		]);
+	
+		return $this->view->render($response, 'main/news/archive/year.twig', $params);
 	}
 	
 	public function rss($request, $response, $args) {
@@ -100,7 +134,7 @@ class NewsController extends BaseController {
 		foreach ($news as $n) {
 			$item = new \FeedItem();
 			$item->title = $n['title'];
-			$item->link = $this->legacyRouter->n($n['tid']);
+			$item->link = $this->legacyRouter->n($n['id']);
 			$item->description = $n['text'];
 			$item->date = $n['pub_date'];
 			$item->author = $n['starter_name'];

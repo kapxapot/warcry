@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Main;
 
+use Illuminate\Support\Arr;
 use Warcry\Slim\Controllers\Controller;
 
 class BaseController extends Controller {
@@ -57,13 +58,22 @@ class BaseController extends Controller {
 					case 'stream':
 						$result[$part] = $this->builder->buildOnlineStream($game);
 						break;
-					
+
 					default:
-						throw new \InvalidArgumentException('Unknown sidebar part: ' . $part);
+						$bits = explode('.', $part);
+						if (count($bits) > 1) {
+							$action = $bits[0];
+							$entity = $bits[1];
+
+							Arr::set($result, "actions.{$action}.{$entity}", true);
+						}
+						else {
+							throw new \InvalidArgumentException('Unknown sidebar part: ' . $part);
+						}
 				}
 			}
 		}
-		
+
 		return $result;
 	}
 	

@@ -1,8 +1,8 @@
 {
-    "name": "kapxapot/warcry-admin-api",
-    "description": "Warcry.ru admin panel and API",
+    "name": "kapxapot/warcry",
+    "description": "Warcry.ru itself, admin panel and API",
     "keywords": ["warcry.ru", "admin", "api", "slim"],
-    "homepage": "http://warcry.ru/admin",
+    "homepage": "http://warcry.ru",
     "license": "TBD",
     "authors": [
         {

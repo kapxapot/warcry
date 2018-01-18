@@ -12,27 +12,36 @@ class Auth extends Contained {
 	private $user;
 	private $role;
 	private $token;
-
-	private function setUser($user) {
-		$_SESSION['user'] = $user->id;
+	
+	private function setUserId($id) {
+		$this->session->set('user', $id);
 		$this->user = null;
 	}
+
+	private function setUser($user) {
+		$this->setUserId($user->id);
+	}
 	
-	private function setToken($token) {
-		$_SESSION['token'] = $token->id;
+	private function setTokenId($id) {
+		$this->session->set('token', $id);
 		$this->token = null;
 	}
 	
-	private function login($user, $token) {
-		$this->setUser($user);
+	private function setToken($token) {
+		$this->setUserId($token->user_id);
+		$this->setTokenId($token->id);
+	}
+	
+	private function login($token) {
 		$this->setToken($token);
 	}
 	
 	public function getUser() {
 		if (!$this->user) {
-			$id = $_SESSION['user'];
+			$id = $this->session->get('user');
+
 			if ($id != null) {
-				$user = $this->db->forTable(Tables::USERS)->findOne($id);
+				$user = $this->db->getObj(Tables::USERS, $id);
 				if (empty($user->name)) {
 					$user->name = $user->login;
 				}
@@ -49,18 +58,25 @@ class Auth extends Contained {
 			$user = $this->getUser();
 			if ($user) {
 				$id = $user->role_id;
-				$this->role = $this->db->forTable(Tables::ROLES)->findOne($id);
+				$this->role = $this->db->getObj(Tables::ROLES, $id);
 			}
 		}
 		
 		return $this->role;
 	}
 	
+	public function isEditor() {
+		$role = $this->getRole();
+		
+		return ($role != null) && ($role->id == 1 || $role->id == 2);
+	}
+	
 	public function getToken() {
 		if (!$this->token) {
-			$id = $_SESSION['token'];
+			$id = $this->session->get('token');
+
 			if ($id != null) {
-				$this->token = $this->db->forTable(Tables::AUTH_TOKENS)->findOne($id);
+				$this->token = $this->db->getObj(Tables::AUTH_TOKENS, $id);
 			}
 		}
 		
@@ -110,7 +126,7 @@ class Auth extends Contained {
 				
 				$token->save();
 
-				$this->login($user, $token);
+				$this->login($token);
 
 				$ok = true;
 			}
@@ -120,16 +136,25 @@ class Auth extends Contained {
 	}
 
 	public function logout() {
-		unset($_SESSION['token']);
-		unset($_SESSION['user']);
+		$this->session->delete('token');
+		$this->session->delete('user');
 	}
 	
 	private function generateExpirationTime() {
 		$ttl = $this->getSettings('token_ttl');
 		return Util::generateExpirationTime($ttl * 60);
 	}
+	
+	public function validateCookie($tokenStr) {
+		try {
+			$this->validateToken($tokenStr);
+		}
+		catch (\Exception $ex) {
+			// do nothing
+		}
+	}
 
-	public function validateToken($tokenStr) {
+	public function validateToken($tokenStr, $ignoreExpiration = false) {
 		$token = $this->getToken();
 		if (!$token || $token->token != $tokenStr) {
 			$token = $this->db->forTable(Tables::AUTH_TOKENS)
@@ -139,7 +164,7 @@ class Auth extends Contained {
 			if ($token == null) {
 				throw new AuthenticationException('Неверный токен безопасности.');
 			}
-			elseif (strtotime($token['expires_at']) < time()) {
+			elseif (!$ignoreExpiration && strtotime($token['expires_at']) < time()) {
 				throw new AuthenticationException('Истек срок действия токена безопасности.');
 			}
 		}

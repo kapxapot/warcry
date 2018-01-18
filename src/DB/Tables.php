@@ -11,6 +11,8 @@ class Tables {
 	const COMIC_PUBLISHERS = 'comic_publishers';
 	const COMIC_SERIES = 'comic_series';
 	const COMIC_STANDALONES = 'comic_standalones';
+	const EVENTS = 'events';
+	const EVENT_TYPES = 'event_types';
 	const FORUMS = 'forums';
 	const FORUM_MEMBERS = 'forum_members';
 	const FORUM_POSTS = 'forum_posts';
@@ -29,11 +31,13 @@ class Tables {
 	const RECIPES = 'recipes';
 	const RECIPE_SOURCES = 'recipe_sources';
 	const REPLACES = 'replaces';
+	const REGIONS = 'regions';
 	const ROLES = 'roles';
 	const SKILLS = 'skills';
 	const SPELLS = 'spells';
 	const SPELL_ICONS = 'spell_icons';
 	const STREAMS = 'streams';
 	const STREAM_STATS = 'stream_stats';
+	const TAGS = 'tags';
 	const USERS = 'users';
 }

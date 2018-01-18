@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Route\Generators;
+namespace App\Generators;
 
 use Warcry\Contained;
 use Warcry\Exceptions\ValidationException;
@@ -48,7 +48,12 @@ class EntityGenerator extends Contained {
 	public function afterDelete($item) {
 	}
 	
-	public function getAdminParams($params, $args) {
+	public function getAdminParams($args) {
+		$settings = $this->getSettings();
+		$params = $settings['entities'][$this->entity];
+		
+		$params['base'] = $this->router->pathFor('admin.index');
+
 		return $params;
 	}
 	
@@ -126,23 +131,23 @@ class EntityGenerator extends Contained {
 
 	public function generateAdminPageRoute($app, $access) {
 		$alias = $this->entity;
-		$settings = $this->getSettings();
 		$provider = $this;
 		$options = $this->getOptions();
 
-		$params = $settings['entities'][$alias];
-
 		$uri = $options['admin_uri'] ?? $options['uri'] ?? $alias;
 
-		$app->get('/' . $uri, function($request, $response, $args) use ($params, $provider, $options) {
+		$app->get('/' . $uri, function($request, $response, $args) use ($provider, $options) {
 			$templateName = isset($options['admin_template'])
 				? ('entities/' . $options['admin_template'])
 				: 'entity';
 
-			$params = $provider->getAdminParams($params, $args);
+			$params = $provider->getAdminParams($args);
+			
+			$params['create_onload'] = $request->getQueryParam('create', false);
+			$params['edit_onload'] = intval($request->getQueryParam('edit', 0));
 
 			return $this->view->render($response, 'admin/' . $templateName . '.twig', $params);
-		})->add($access($alias, 'read_own', 'admin.index'))->setName('admin.' . $alias);
+		})->add($access($alias, 'read_own', 'admin.index'))->setName('admin.entities.' . $alias);
 		
 		return $this;
 	}

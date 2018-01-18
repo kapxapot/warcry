@@ -3,6 +3,14 @@
 		<li class="dropdown">
 		  	<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ auth.user.name }} ({{ auth.role.name }}) <span class="caret"></span></a>
 			<ul class="dropdown-menu">
+				<li><a href="{{ path_for('admin.entities.news') ~ '?create=true' }}">{{ labels.create.news }}</a></li>
+				<li><a href="{{ path_for('admin.entities.articles') ~ '?create=true' }}">{{ labels.create.articles }}</a></li>
+				<li><a href="{{ path_for('admin.entities.streams') ~ '?create=true' }}">{{ labels.create.streams }}</a></li>
+ 				<li role="separator" class="divider"></li>
+ 				{% if auth.editor %}
+					<li><a href="{{ path_for('admin.index') }}">Админка</a></li>
+	 				<li role="separator" class="divider"></li>
+ 				{% endif %}
 				<li><a href="javascript:void(0);" ng-click="passwordChange();">Смена пароля</a></li>
  				<li role="separator" class="divider"></li>
 				<li><a href="javascript:void(0);" ng-click="signOut();">Выход</a></li>

@@ -32,10 +32,12 @@ class TableHelper extends Helper {
 	}
 	
 	public function addRights($item) {
-		$access = $this->getRights($item);
-
-		$item['access']['edit'] = $access['edit'];
-		$item['access']['delete'] = $access['delete'];
+		if ($item) {
+			$access = $this->getRights($item);
+	
+			$item['access']['edit'] = $access['edit'];
+			$item['access']['delete'] = $access['delete'];
+		}
 
 		return $item;
 	}

@@ -50,7 +50,7 @@ class ArticleParser extends Contained {
 
 										$contentsLink["level"] = 1;
 										$contentsLink["label"] = $label;
-										$contentsLink["text"] = $tagText;
+										$contentsLink["text"] = $tagData;
 										
 										$contents[] = $contentsLink;
 
@@ -62,7 +62,7 @@ class ArticleParser extends Contained {
 
 										$contentsLink["level"] = 2;
 										$contentsLink["label"] = $label;
-										$contentsLink["text"] = $tagText;
+										$contentsLink["text"] = $tagData;
 										
 										$contents[] = $contentsLink;
 
@@ -247,8 +247,10 @@ class ArticleParser extends Contained {
 					$newtext .= $this->decorator->url($url, $content, $title);
 
 					if (isset($item_id)) {
-						$recipe_data = $this->db->getSourceSpell($item_id);
-						if (is_array($recipe_data)) {
+						$sources = $this->db->getRecipesByItemId($item_id);
+						if (is_array($sources) && count($sources) > 0) {
+							$recipe_data = $sources[0];
+
 							$title = 'Рецепт: ' . $recipe_data['name_ru'];
 							$rel = 'spell=' . $recipe_data['id'] . '&amp;domain=ru';
 							$recipeUrl = $this->decorator->recipePageUrl($recipe_data['id'], $title, $rel);
@@ -377,11 +379,11 @@ class ArticleParser extends Contained {
 					$title = '';
 					$spell_suffix = '';
 
-					$recipe_id = $this->db->getRecipeId($id_esc);
-					if (isset($recipe_id)) {
+					$recipe = $this->db->getRecipeByName($id_esc);
+					if ($recipe) {
 						$title = 'Рецепт: ' . $id_esc;
-						$rel = 'spell=' . $recipe_id . '&amp;domain=ru';
-						$recipeUrl = $this->decorator->recipePageUrl($recipe_id, $title, $rel, $id_esc);
+						$rel = 'spell=' . $recipe['id'] . '&amp;domain=ru';
+						$recipeUrl = $this->decorator->recipePageUrl($recipe['id'], $title, $rel, $id_esc);
 						
 						$newtext .= $recipeUrl;
 					}
@@ -630,7 +632,7 @@ class ArticleParser extends Contained {
 	public function parseBB($input) {
 		$text = $input;
 		
-		$text = str_replace([ "\r\n", "\r", "\n" ], '<br/>' , $text);
+		$text = str_replace([ "\r\n", "\r", "\n" ], '<br/>', $text);
 
 		// other replaces
 		$text = $this->replaces($text);
@@ -656,6 +658,9 @@ class ArticleParser extends Contained {
 		$text = preg_replace('#(<p><div)#', '<div', $text);
 		$text = preg_replace('#(</div></p>)#', '</div>', $text);
 		
+		$text = str_replace('<p><ul>', '<ul>', $text);
+		$text = str_replace('</ul></p>', '</ul>', $text);
+		
 		$result['text'] = $text;
 		
 		return $result;
@@ -675,7 +680,7 @@ class ArticleParser extends Contained {
 				$tag = $content_parts[0];
 				$tag_parts = preg_split('/:/', $tag);
 				$tag_prefix = $tag_parts[0];
-				if (count($tag_parts) == 1 || !in_array($tag_prefix, [ 'npc', 'item', 'spell', 'quest', 'coords', 'zone', 'ach', 'card' ])) {
+				if (count($tag_parts) == 1 || !in_array($tag_prefix, [ 'npc', 'item', 'spell', 'quest', 'coords', 'zone', 'ach', 'card', 'news' ])) {
 					// статья
 					$id = $content_parts[0];
 					$cat = '';
@@ -711,58 +716,47 @@ class ArticleParser extends Contained {
 					}
 
 					if (strlen($id) > 0) {
+						$args = 'search?q=' . $this->fromSpaces($id, '+');
+						$wowheadTitle = "Искать {$id} на Wowhead";
+
 						switch ($tag_prefix) {
 							case 'npc':
-								$search_str = $this->fromSpaces($id, '+');
-								$title = '';
-								$npc_suffix = '';
-
-								if (is_numeric($id)) {
-									$npc_id = $id;
-								}
-								else {
-									$npc_id = $this->db->getNPCId($id);
+								if (!is_numeric($id)) {
+									$id = $this->db->getNPCId($id);
 								}
 
-								if (isset($npc_id)) {
-									$npc_args = 'npc=' . $npc_id;
+								if ($id > 0) {
+									$args = 'npc=' . $id;
 								}
 								else {
-									$npc_args = 'search?q=' . $search_str;
-									$npc_suffix = '#npcs';
-									$title = "Искать {$id} на Wowhead";
+									$suffix = '#npcs';
+									$title = $wowheadTitle;
 								}
 							
-								$url = $this->getWebDbLink($npc_args . $npc_suffix);
+								$url = $this->getWebDbLink($args . $suffix);
 								$newtext .= $this->decorator->url($url, $content, $title);
 
 								break;
 
 							case 'item':
-								$search_str = $this->fromSpaces($id, '+');
-								$title = '';
-
-								if (is_numeric($id)) {
-									$item_id = $id;
-								}
-								else {
-									$item_id = $this->db->getItemId($id);
+								if (!is_numeric($id)) {
+									$id = $this->db->getItemId($id);
 								}
 
-								if (isset($item_id)) {
-									$item_args = 'item=' . $item_id;
+								if ($id > 0) {
+									$args = 'item=' . $id;
 								}
 								else {
-									$item_args = 'search?q=' . $search_str;
-									$title = "Искать {$id} на Wowhead";
+									$title = $wowheadTitle;
 								}
 							
-								$url = $this->getWebDbLink($item_args);
+								$url = $this->getWebDbLink($args);
 								$newtext .= $this->decorator->url($url, $content, $title);
 
-								if (isset($item_id)) {
-									$recipe_data = $this->db->getSourceSpell($item_id);
-									if (is_array($recipe_data)) {
+								if ($id > 0) {
+									$sources = $this->db->getRecipesByItemId($id);
+									if (is_array($sources) && count($sources) > 0) {
+										$recipe_data = $sources[0];
 										$title = 'Рецепт: ' . $recipe_data['name_ru'];
 										$rel = 'spell=' . $recipe_data['id'] . '&amp;domain=ru';
 										$recipeUrl = $this->decorator->recipePageUrl($recipe_data['id'], $title, $rel);
@@ -774,68 +768,48 @@ class ArticleParser extends Contained {
 								break;
 
 							case 'spell':
-								$search_str = $this->fromSpaces($id, '+');
-								$skill = $this->toSpaces($skill);
-								$title = '';
-								$spell_suffix = '';
-
 								$recipe = $this->db->getRecipe($id);
-								if (is_array($recipe)) {
-									$recipe_id = $id;
-								}
-
-								if (isset($recipe_id)) {
+								
+								if ($recipe) {
 									$title = 'Рецепт: ' . $content; // $id
-									$rel = 'spell=' . $recipe_id . '&amp;domain=ru';
-									$recipeUrl = $this->decorator->recipePageUrl($recipe_id, $title, $rel, $content);
+									$rel = 'spell=' . $id . '&amp;domain=ru';
+									$recipeUrl = $this->decorator->recipePageUrl($id, $title, $rel, $content);
 							
 									$newtext .= $recipeUrl;
 								}
 								else {
-									if (is_numeric($id)) {
-										$spell_id = $id;
-									}
-									else {
-										$spell_id = $this->db->getSpellId($id, $skill);
+									if (!is_numeric($id)) {
+										$id = $this->db->getSpellId($id);
 									}
 
-									if (isset($spell_id)) {
-										$spell_args = 'spell=' . $spell_id;
+									if ($id > 0) {
+										$args = 'spell=' . $id;
 									}
 									else {
-										$spell_args = 'search?q=' . $search_str;
-										$spell_suffix = '#abilities';
-										$title = "Искать {$id} на Wowhead";
+										$suffix = '#abilities';
+										$title = $wowheadTitle;
 									}
 									
-									$url = $this->getWebDbLink($spell_args . $spell_suffix);
+									$url = $this->getWebDbLink($args . $suffix);
 									$newtext .= $this->decorator->url($url, $content, $title);
 								}
 
 								break;
 
 							case 'quest':
-								$search_str = $this->fromSpaces($id, '+');
-								$title = '';
-								$quest_suffix = '';
-
-								if (is_numeric($id)) {
-									$quest_id = $id;
-								}
-								else {
-									$quest_id = $this->db->getQuestId($id);
+								if (!is_numeric($id)) {
+									$id = $this->db->getQuestId($id);
 								}
 
-								if (isset($quest_id)) {
-									$quest_args = 'quest=' . $quest_id;
+								if ($id > 0) {
+									$args = 'quest=' . $id;
 								}
 								else {
-									$quest_args = 'search?q=' . $search_str;
-									$quest_suffix = '#quests';
-									$title = "Искать {$id} на Wowhead";
+									$suffix = '#quests';
+									$title = $wowheadTitle;
 								}
 								
-								$url = $this->getWebDbLink($quest_args . $quest_suffix);
+								$url = $this->getWebDbLink($args . $suffix);
 								$newtext .= $this->decorator->url($url, $content, $title);
 
 								break;
@@ -847,20 +821,17 @@ class ArticleParser extends Contained {
 								$coords_link = null;
 								$coords_text = $this->decorator->coordsBlock($x, $y);
 
-								if (is_numeric($id)) {
-									$loc_id = $id;
-								}
-								else {
-									$loc_id = $this->db->getLocationId($id);
+								if (!is_numeric($id)) {
+									$id = $this->db->getLocationId($id);
 								}
 
-								if (isset($loc_id)) {
+								if ($id > 0) {
 									$coords = '';
 									if ($x > 0 && $y > 0) {
 										$coords = ':' . ($x * 10) . ($y * 10);
 									}
 									
-									$url = $this->getWebDbLink('maps?data=' . $loc_id . $coords);
+									$url = $this->getWebDbLink('maps?data=' . $id . $coords);
 									$coords_link = $this->decorator->url($url, $coords_text);
 								}
 
@@ -869,69 +840,51 @@ class ArticleParser extends Contained {
 								break;
 
 							case 'zone':
-								$search_str = $this->fromSpaces($id, '+');
-								$title = '';
-								$zone_suffix = '';
-
 								if (is_numeric($id)) {
-									$zone_id = $id;
-								}
-
-								if (isset($zone_id)) {
-									$zone_args = 'zone=' . $zone_id;
+									$args = 'zone=' . $id;
 								}
 								else {
-									$zone_args = 'search?q=' . $search_str;
-									$zone_suffix = '#zones';
-									$title = "Искать {$id} на Wowhead";
+									$suffix = '#zones';
+									$title = $wowheadTitle;
 								}
 								
-								$url = $this->getWebDbLink($zone_args . $zone_suffix);
+								$url = $this->getWebDbLink($args . $suffix);
 								$newtext .= $this->decorator->url($url, $content, $title);
 
 								break;
 
 							case 'ach':
-								$search_str = $this->fromSpaces($id, '+');
-								$title = '';
-								$ach_suffix = '';
-
 								if (is_numeric($id)) {
-									$ach_id = $id;
-								}
-
-								if (isset($ach_id)) {
-									$ach_args = 'achievement=' . $ach_id;
+									$args = 'achievement=' . $id;
 								}
 								else {
-									$ach_args = 'search?q=' . $search_str;
-									$ach_suffix = '#achievements';
-									$title = "Искать {$id} на Wowhead";
+									$suffix = '#achievements';
+									$title = $wowheadTitle;
 								}
 								
-								$url = $this->getWebDbLink($ach_args . $ach_suffix);
+								$url = $this->getWebDbLink($args . $suffix);
 								$newtext .= $this->decorator->url($url, $content, $title);
 
 								break;
 
 							case 'card':
-								$search_str = $this->fromSpaces($id, '+');
-								$title = '';
-
 								if (is_numeric($id)) {
-									$card_id = $id;
-								}
-
-								if (isset($card_id)) {
-									$card_args = 'card=' . $card_id;
+									$args = 'card=' . $id;
 								}
 								else {
-									$card_args = 'search?q=' . $search_str;
 									$title = "Искать {$id} на Hearthhead";
 								}
 								
-								$url = $this->getSettings('legacy.hsdb_ru_link') . $card_args;
+								$url = $this->getSettings('legacy.hsdb_ru_link') . $args;
 								$newtext .= $this->decorator->url($url, $content, $title);
+
+								break;
+
+							case 'news':
+								$url = $this->legacyRouter->news($id);
+								$url = $this->legacyRouter->abs($url);
+								
+								$newtext .= $this->decorator->url($url, $content);
 
 								break;
 						}
@@ -1213,5 +1166,9 @@ class ArticleParser extends Contained {
 		$text = $this->parseSpoilerBB($text);
 
 		return $text;
+	}
+	
+	public function renderArticleLinks($text) {
+		return str_replace('%article%/', $this->legacyRouter->article(), $text);
 	}
 }

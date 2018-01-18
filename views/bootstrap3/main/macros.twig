@@ -48,3 +48,11 @@
 		{{ skill_id }}
 	{% endif %}
 {% endmacro %}
+
+{% macro edit_button(entity, id, access) %}
+	{% if access %}
+		<a class="btn btn-default btn-pad pull-right" href="{{ path_for('admin.entities.' ~ entity) ~ '?edit=' ~ id }}" role="button">
+			<span class="glyphicon glyphicon-pencil" title="Редактировать"></span>
+		</a>
+	{% endif %}
+{% endmacro %}

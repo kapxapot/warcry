@@ -6,7 +6,7 @@ $(function() {
 
 	// tabs
 	$('.nav-tabs a').on('shown.bs.tab', function (e) {
-		var hash = e.target.hash.replace('#', '#!');
+		var hash = e.target.hash.replace('#', '#/');
 	    if (history.pushState) {
 	        history.pushState(null, null, hash); 
 	    } else {
@@ -14,8 +14,8 @@ $(function() {
 	    }
 	});
 	
-	if (document.location.hash.match('#!')) {
-		var hash = document.location.hash.replace(/^#!/, '');
+	if (document.location.hash.match('#/')) {
+		var hash = document.location.hash.replace(/^#\//, '');
 	    $('.nav-tabs a[href="#' + hash + '"]').tab('show');
 	}
 });

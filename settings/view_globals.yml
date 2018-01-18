@@ -11,12 +11,19 @@ team_mail: team[собака]warcry.ru
 folders:
 
   # public folder for site's CSS and JS
-  public: /codiad/workspace/warcry_admin/public/
+  public: /codiad/workspace/warcry_prod/public/
 
   # public folder for shared libraries (JS)
   lib: /lib/
 
 mde: true
+
+labels:
+  create:
+    news: Написать новость
+    articles: Написать статью
+    streams: Добавить стрим
+    events: Добавить событие
 
 admin_menu:
   - games
@@ -32,3 +39,9 @@ admin_menu:
         - comic_series
         - comic_standalones
         - comic_publishers
+  - group:
+      title: События
+      items:
+        - events
+        - event_types
+        - regions

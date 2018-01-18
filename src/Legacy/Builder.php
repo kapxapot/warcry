@@ -4,21 +4,31 @@ namespace App\Legacy;
 
 use Warcry\Contained;
 use Warcry\Util\Cases;
+use Warcry\Util\Date;
 use Warcry\Util\Sort;
+use Warcry\Util\Strings;
+
+use App\DB\Taggable;
 
 class Builder extends Contained {
 	private $router;
 	private $decorator;
+	private $articleParser;
 	private $newsParser;
 	private $forumParser;
+	
+	private $sort;
 
 	public function __construct($container) {
 		parent::__construct($container);
 		
 		$this->router = $this->legacyRouter; // from container
 		$this->decorator = $this->legacyDecorator; // from container
+		$this->articleParser = $this->legacyArticleParser; // from container
 		$this->newsParser = $this->legacyNewsParser; // from container
 		$this->forumParser = $this->legacyForumParser; // from container
+		
+		$this->sort = new Sort;
 	}
 
 	public function buildGame($row) {
@@ -34,6 +44,14 @@ class Builder extends Contained {
 		return array_map(function($row) {
 			return $this->buildGame($row);
 		}, $rows);
+	}
+
+	private function year($date) {
+		return strftime('%Y', $date);
+	}
+
+	private function month($date) {
+		return strftime('%m', $date);
 	}
 	
 	private function formatDate($date) {
@@ -62,7 +80,7 @@ class Builder extends Contained {
 		if ($tagRows) {
 			foreach ($tagRows as $tagRow) {
 				$text = $tagRow['tag_text'];
-				$tags[] = [ 'text' => $text, 'url' => $this->router->forumTag($text) ];
+				$tags[] = [ 'text' => $text, 'url' => $this->router->tag($text, Taggable::NEWS) ];
 			}
 		}
 
@@ -79,6 +97,9 @@ class Builder extends Contained {
 	}
 
 	public function buildNews($news, $full = false, $rebuild = false) {
+		$nParser = $this->newsParser;
+		$aParser = $this->articleParser;
+		
 		$id = $news['id'];
 		
 		$game = $this->db->getGame($news['game_id']);
@@ -88,35 +109,29 @@ class Builder extends Contained {
 			$text = $news['cache'];
 		}
 		else {
-			$parsed = $this->legacyArticleParser->parseBB($news['text']);
+			$parsed = $aParser->parseBB($news['text']);
 			$text = $parsed['text'];
 
 			$this->db->saveNewsCache($id, $text);
 		}
 		
-		$text = $this->legacyNewsParser->parseCut($id, $text, $full);
-		$text = str_replace('%article%/', $this->router->article(), $text);
+		$text = $nParser->parseCut($id, $text, $full);
+		$text = $aParser->renderArticleLinks($text);
+		$text = $nParser->makeAbsolute($text);
 
 		$news['text'] = $text;
 
 		if (strlen($text) > 0) {
 			$news['description'] = substr(strip_tags($text), 0, 1000);
 		}
-		
-		$news['tags'] = array_map(function($t) {
-			return [
-				'text' => trim($t),
-				//'url' => $this->router->forumTag($text),
-			];
-		}, explode(',', $news['tags']));
+
+		$news['tags'] = $this->tags($news['tags'], Taggable::NEWS);
+
+		$news['pub_date'] = strtotime($news['published_at']);
 
 		$news = $this->stamps($news);
 
-		$news['pub_date'] = strtotime($news['published_at']);
-		$news['start_date'] = $news['published_at']
-			? $this->formatDateTime(strtotime($news['published_at']))
-			: 'Не опубликована!';
-
+		$news['start_date'] = $news['published_at'];
 		$news['starter_name'] = $news['author']['name'];
 		$news['starter_url'] = $news['author']['member_url'];
 		$news['url'] = $this->router->news($id);
@@ -124,20 +139,39 @@ class Builder extends Contained {
 		return $news;
 	}
 
-	public function buildForumNewsLink($row) {
-		$id = $row['tid'];
+	public function buildForumNewsLink($news) {
+		$id = $news['tid'];
 		
-		$title = $this->newsParser->decodeTopicTitle($row['title']);
-		$game = $this->db->getGameByForumId($row['forum_id']);
+		$news['id'] = $id;
+		$news['title'] = $this->newsParser->decodeTopicTitle($news['title']);
 
-		return [
-			'title' => $title,
-			'game' => $game,
-			'posts' => $row['posts'],
-			'url' => $this->router->news($id),
-		];
+		$game = $this->db->getGameByForumId($news['forum_id']);
+		$news['game'] = $this->buildGame($game);
+
+		$news['pub_date'] = $news['start_date'];
+		$news['start_date'] = $this->formatDate($news['start_date']);
+		$news['url'] = $this->router->news($id);
+		$news['forum_url'] = $this->router->forumTopic($id);
+
+		return $news;
 	}
-	
+
+	public function buildNewsLink($news) {
+		$id = $news['id'];
+		
+		$game = $this->db->getGame($news['game_id']);
+		$news['game'] = $this->buildGame($game);
+
+		$news['pub_date'] = strtotime($news['published_at']);
+
+		$news = $this->stamps($news, true);
+
+		$news['start_date'] = $news['published_at'];
+		$news['url'] = $this->router->news($id);
+
+		return $news;
+	}
+
 	public function buildForumTopic($filterByGame, $row) {
 		$title = $this->newsParser->decodeTopicTitle($row['title']);
 
@@ -158,35 +192,106 @@ class Builder extends Contained {
 	}
 	
 	public function buildLatestNews($filterByGame, $limit, $exceptNewsId) {
-		$rows = $this->buildAllNews($filterByGame, 0, $limit, $exceptNewsId);
-		
-		return array_map(function($row) {
-			return $this->buildForumNewsLink($row);
-		}, $rows);
+		return $this->buildAllNews($filterByGame, 0, $limit, $exceptNewsId);
 	}
 	
-	public function buildAllNews($filterByGame, $offset, $limit, $exceptNewsId = null) {
-		$forumNewsRows = $this->db->getLatestForumNews($filterByGame, $offset, $limit, $exceptNewsId);
-		foreach ($forumNewsRows as $row) {
-			$news[] = $this->buildForumNews($row);
-		}
-		
-		$newsRows = $this->db->getLatestNews($filterByGame, $offset, $limit, $exceptNewsId);
-		foreach ($newsRows as $row) {
-			$news[] = $this->buildNews($row);
-		}
-		
-		$sorts = [
-			'pub_date' => [ 'dir' => 'desc' ],
-		];
+	protected function sortByDate($items, $field = 'pub_date') {
+		return $this->sort->multiSort($items, [
+			$field => [ 'dir' => 'desc' ],
+		]);
+	}
+	
+	public function buildAllNews($filterByGame = null, $offset = 0, $limit = 0, $exceptNewsId = null) {
+		$forumNews = $this->db->getLatestForumNews($filterByGame, $offset, $limit, $exceptNewsId) ?? [];
+		$news = $this->db->getLatestNews($filterByGame, $offset, $limit, $exceptNewsId) ?? [];
 
-		$sort = new Sort;
-		$sorted = $sort->multiSort($news, $sorts);
+		$merged = array_merge(
+			array_map(function($fn) {
+				return $this->buildForumNews($fn);
+			}, $forumNews),
+			array_map(function($n) {
+				return $this->buildNews($n);
+			}, $news)
+		);
+		
+		$sorted = $this->sortByDate($merged);
 		$news = array_slice($sorted, 0, $limit);
 		
 		return $news;
 	}
 	
+	public function buildNewsYears() {
+		$forumNews = $this->db->getLatestForumNews() ?? [];
+		$news = $this->db->getLatestNews() ?? [];
+		
+		$years = array_merge(
+			array_map(function($fn) {
+				return $this->year($fn['start_date']);
+			}, $forumNews),
+			array_map(function($n) {
+				return $this->year(strtotime($n['published_at']));
+			}, $news)
+		);
+		
+		$years = array_unique($years);
+		rsort($years);
+		
+		return $years;
+	}
+	
+	public function buildNewsArchive($year) {
+		$forumNews = $this->db->getForumNewsByYear($year) ?? [];
+		$news = $this->db->getNewsByYear($year) ?? [];
+
+		$merged = array_merge(
+			array_map(function($fn) {
+				return $this->buildForumNewsLink($fn);
+			}, $forumNews),
+			array_map(function($n) {
+				return $this->buildNewsLink($n);
+			}, $news)
+		);
+		
+		$sorted = $this->sortByDate($merged);
+		
+		$monthly = [];
+		
+		foreach ($sorted as $s) {
+			$month = intval($this->month($s['pub_date']));
+			if (!array_key_exists($month, $monthly)) {
+				$monthly[$month] = [
+					'label' => Date::SHORT_MONTHS[$month],
+					'full_label' => Date::MONTHS[$month],
+					'news' => [],
+				];
+			}
+			
+			$monthly[$month]['news'][] = $s;
+		}
+
+		ksort($monthly);
+
+		return $monthly;
+	}
+	
+	public function buildNewsByTag($tag) {
+		$tag = Strings::normalize($tag);
+		
+		$forumNews = $this->db->getForumNewsByTag($tag) ?? [];
+		$news = $this->db->getNewsByTag($tag) ?? [];
+
+		$merged = array_merge(
+			array_map(function($fn) {
+				return $this->buildForumNewsLink($fn);
+			}, $forumNews),
+			array_map(function($n) {
+				return $this->buildNewsLink($n);
+			}, $news)
+		);
+		
+		return $this->sortByDate($merged);
+	}
+
 	public function buildArticle($article) {
 		$result = $article->data;
 
@@ -196,7 +301,7 @@ class Builder extends Contained {
 		
 		$result['game'] = $this->db->getGame($result['game_id']);
 
-		$text = str_replace('%article%/', $this->router->article(), $article->text);
+		$text = $this->legacyArticleParser->renderArticleLinks($article->text);
 
 		if (strlen($text) > 0) {
 			$result['description'] = substr(strip_tags($text), 0, 2000);
@@ -625,15 +730,15 @@ class Builder extends Contained {
 			$data['editor'] = $this->buildUser($row);
 		}
 		
-		if ($shortDates) {
-			$data['created_at'] = $this->formatDate(strtotime($data['created_at']));
-			$data['updated_at'] = $this->formatDate(strtotime($data['updated_at']));
-		}
-		else {
-			$data['created_at'] = $this->formatDateTime(strtotime($data['created_at']));
-			$data['updated_at'] = $this->formatDateTime(strtotime($data['updated_at']));
-		}
+		$dateFields = [ 'created_at', 'published_at', 'updated_at', 'starts_at', 'ends_at' ];
+		$func = $shortDates ? 'formatDate' : 'formatDateTime';
 		
+		foreach ($dateFields as $dateField) {
+			if (isset($data[$dateField])) {
+				$data[$dateField] = $this->{$func}(strtotime($data[$dateField]));
+			}
+		}
+
 		return $data;
 	}
 
@@ -690,8 +795,7 @@ class Builder extends Contained {
 			'name' => [ 'dir' => 'asc', 'type' => 'string' ],
 		];
 
-		$sort = new Sort;
-		$authors = $sort->multiSort($authors, $sorts);
+		$authors = $this->sort->multiSort($authors, $sorts);
 		
 		return $authors;
 	}
@@ -812,24 +916,29 @@ class Builder extends Contained {
 		return $user;
 	}
 	
+	private function isPriorityGame($game) {
+		$game = strtolower($game);
+		$priorityGames = $this->getSettings('legacy.streams.priority_games');
+
+		return in_array($game, $priorityGames);
+	}
+	
 	public function buildStream($row) {
 		$stream = $row;
 
-		$streamTimeToLive = $this->getSettings('legacy.streams.ttl');
-		$now = new \DateTime;
-
-		$stream['priority_game'] = true;
+		$stream['priority_game'] = false;
 
 		if ($stream['remote_online_at']) {
-			$dt = new \DateTime($stream['remote_online_at']);
-			$interval = $dt->diff($now);
-
-			$stream['alive'] = ($interval->d < $streamTimeToLive);
+			$streamTimeToLive = $this->getSettings('legacy.streams.ttl');
+			$age = Date::age($stream['remote_online_at']);
+			
+			$stream['alive'] = ($age->days < $streamTimeToLive);
 
 			if ($stream['alive']) {
-				$game = strtolower($stream['remote_game']) ?? '';
+				$stream['priority_game'] = $this->isPriorityGame($stream['remote_game']);
+				/*$game = strtolower($stream['remote_game']) ?? '';
 				$priorityGames = $this->getSettings('legacy.streams.priority_games');
-				$stream['priority_game'] = in_array($game, $priorityGames);
+				$stream['priority_game'] = in_array($game, $priorityGames);*/
 			}
 		}
 
@@ -842,12 +951,11 @@ class Builder extends Contained {
 		switch ($stream['type']) {
 			// Twitch
 			case 1:
-				//$stream['img_url'] = "http://static-cdn.jtvnw.net/previews/live_user_{$id}-320x180.jpg";
-				$stream['img_url'] = "https://static-cdn.jtvnw.net/previews-ttv/live_user_{$id}-320x180.jpg";
-				$stream['large_img_url'] = "https://static-cdn.jtvnw.net/previews-ttv/live_user_{$id}-640x360.jpg";
+				$stream['img_url'] = $this->router->twitchImg($id);
+				$stream['large_img_url'] = $this->router->twitchLargeImg($id);
 				
 				$stream['twitch'] = true;
-				$stream['stream_url'] = "http://twitch.tv/{$id}";
+				$stream['stream_url'] = $this->router->twitch($id);
 				break;
 
 			default:
@@ -859,8 +967,8 @@ class Builder extends Contained {
 		if ($onlineAt) {
 			$stream['remote_online_at'] = $this->formatDate(strtotime($onlineAt));
 		}
-
-		$stream['remote_online_ago'] = $this->dateToAgo($onlineAt);
+		
+		$stream['remote_online_ago'] = Date::toAgo($onlineAt);
 		
 		$form = [
 			'time' => Cases::PAST,
@@ -876,6 +984,157 @@ class Builder extends Contained {
 		return $stream;
 	}
 	
+	public function buildStreamStats($stream) {
+		$stats = [];
+		
+		$games = $this->db->getStreamGameStats($stream['id']);
+		
+		if (!empty($games)) {
+			$total = 0;
+			foreach ($games as $game) {
+				$total += $game['count'];
+			}
+			
+			$games = array_map(function($game) use ($total) {
+				$game['percent'] = ($total > 0)
+					? round($game['count'] * 100 / $total, 1)
+					: 0;
+
+				$game['priority'] = $this->isPriorityGame($game['remote_game']);
+				
+				return $game;
+			}, $games);
+
+			$sorts = [
+				'priority' => [ 'dir' => 'desc' ],
+				'percent' => [ 'dir' => 'desc' ],
+			];
+		
+			$games = $this->sort->multiSort($games, $sorts);
+			
+			$blizzardTotal = 0;
+			foreach ($games as $game) {
+				if ($game['priority']) {
+					$blizzardTotal += $game['percent'];
+				}
+			}
+
+			$stats['games'] = $games;
+			$stats['blizzard_total'] = $blizzardTotal;
+			
+			$stats['blizzard'] = [
+				[ 'value' => $blizzardTotal, 'label' => 'Игры Blizzard' ],
+				[ 'value' => 100 - $blizzardTotal, 'label' => 'Другие игры' ]
+			];
+		}
+
+		$now = new \DateTime;
+		$start = Date::startOfHour($now)->modify('-23 hour');
+
+		$latest = $this->db->getStreamStatsFrom($stream['id'], $start);
+
+		if (!empty($latest)) {
+			$latest = array_map(function($s) {
+				$cr = strtotime($s['created_at']);
+				
+				$s['stamp'] = strftime('%d-%H', $cr);
+				$s['iso'] = Date::formatIso($cr);
+				
+				return $s;
+			}, $latest);
+
+			//$stats['bars'] = $this->buildHourlyStreamStats($latest, $start, $now);
+			$stats['viewers'] = $this->buildGamelyStreamStats($latest, $start, $now);
+		}
+
+		return $stats;
+	}
+	
+	private function buildHourlyStreamStats($latest, \DateTime $start, \DateTime $now) {
+		$hourly = [];
+		
+		$cur = clone $start;
+
+		while ($cur < $now) {
+			$stamp = $cur->format('d-H');
+
+			$slice = array_filter($latest, function($s) use ($stamp) {
+				return $s['stamp'] == $stamp;
+			});
+
+			$avg = 0;
+			
+			if (!empty($slice)) {
+				$sum = 0;
+				foreach ($slice as $stat) {
+					$sum += $stat['remote_viewers'];
+				}
+				
+				$avg = $sum / count($slice);
+			}
+			
+			$hourly[] = [
+				'hour' => $cur->format('G'),
+				'viewers' => floor($avg),
+			];
+			
+			$cur->modify('+1 hour');
+		}
+		
+		return $hourly;
+	}
+	
+	private function buildGamelyStreamStats($latest, \DateTime $start, \DateTime $end) {
+		$gamely = [];
+		
+		$prev = null;
+		$prevGame = null;
+		
+		$set = [];
+		
+		$closeSet = function($game) use (&$gamely, &$set) {
+			if (!empty($set)) {
+				if (!array_key_exists($game, $gamely)) {
+					$gamely[$game] = [];
+				}
+
+				$gamely[$game][] = $set;
+				$set = [];
+			}
+		};
+		
+		foreach ($latest as $s) {
+			$game = $s['remote_game'];
+			
+			if ($prev) {
+				$exceeds = Date::exceedsInterval($prev['created_at'], $s['created_at'], 'PT30M'); // 30 minutes
+
+				if ($exceeds) {
+					$closeSet($prevGame);
+				}
+				elseif ($prevGame != $game) {
+					$closeSet($prevGame);
+
+					$prev['remote_game'] = $game;
+					$set[] = $prev;
+				}
+			}
+
+			$set[] = $s;
+			
+			$prev = $s;
+			$prevGame = $game;
+		}
+		
+		$closeSet($prevGame);
+
+		return [
+			'data' => $gamely,
+			'min_date' => Date::formatIso($start),
+			'max_date' => Date::formatIso($end),
+		];
+	}
+	
 	public function updateStreamData($row, $notify = false) {
 		$stream = $row;
 		
@@ -884,11 +1143,10 @@ class Builder extends Contained {
 		switch ($stream['type']) {
 			// Twitch
 			case 1:
-				$data = $this->getTwitchStreamData($id);
-				$json = json_decode($data, true);
+				$data = $this->twitch->getStreamData($id);
 
-				if (isset($json['streams'][0])) {
-					$s = $json['streams'][0];
+				if (isset($data['streams'][0])) {
+					$s = $data['streams'][0];
 
 					$streamStarted = ($stream['remote_online'] == 0);
 
@@ -935,7 +1193,6 @@ class Builder extends Contained {
 	
 	private function updateStreamStats($stream) {
 		$online = ($stream['remote_online'] == 1);
-		
 		$refresh = $online;
 		
 		$stats = $this->db->getLastStreamStats($stream['id']);
@@ -943,11 +1200,10 @@ class Builder extends Contained {
 		if ($stats) {
 			if ($online) {
 				$statsTTL = $this->getSettings('legacy.streams.stats_ttl');
-				$now = new \DateTime;
-				$dt = new \DateTime($stats['created_at']);
-				$interval = $dt->diff($now);
+
+				$exceeds = Date::exceedsInterval($stats['created_at'], null, "PT{$statsTTL}M");
 	
-				if (($interval->i < $statsTTL) && ($stream['remote_game'] == $stats['remote_game'])) {
+				if (!$exceeds && ($stream['remote_game'] == $stats['remote_game'])) {
 					$refresh = false;
 				}
 			}
@@ -977,7 +1233,8 @@ class Builder extends Contained {
 			: "is playing <b>{$s['remote_game']}</b>
 {$s['remote_status']}";
 		
-		$source = "<a href=\"http://twitch.tv/{$s['stream_id']}\">{$s['title']}</a>";
+		$url = $this->router->twitch($s['stream_id']);
+		$source = "<a href=\"{$url}\">{$s['title']}</a>";
 		
 		$message = $source . ' ' . $verb;
 		$messageEn = $source . ' ' . $verbEn;
@@ -1007,69 +1264,11 @@ class Builder extends Contained {
 
 		foreach ($settings as $setting) {
 			if ($setting['condition']) {
-				$this->notifyTelegram($setting['message'], $setting['channel']);
+				$this->telegram->sendMessage($setting['channel'], $setting['message']);
 			}
 		}
 
 		return $message . ' ' . $messageEn;
-	}
-	
-	private function notifyTelegram($message, $channelId) {
-		$tgs = $this->getSettings('telegram');
-		
-		$botToken = $tgs['bot_token'];
-		$channel = $tgs['channels'][$channelId];
-
-		$this->curlTelegramSendMessage($botToken, $channel, $message);
-	}
-
-	private function curlTelegramSendMessage($botToken, $chatId, $message) {
-		$url = "https://api.telegram.org/bot{$botToken}/sendMessage";
-		$params = [
-		    'chat_id' => '@' . $chatId,
-		    'text' => $message,
-		    'parse_mode' => 'html',
-		];
-		
-		$ch = curl_init();
-		
-		curl_setopt($ch, CURLOPT_HEADER, false);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		
-		$result = curl_exec($ch);
-		curl_close($ch);
-		
-		return $result;
-	}
-
-	private function getTwitchStreamData($id) {
-		$url = "https://api.twitch.tv/kraken/streams?channel={$id}";
-		$clientId = $this->getSettings('twitch.client_id');
-		$data = $this->curlGetFromTwitch($url, $clientId);
-
-		return $data;
-	}
-
-	private function curlGetFromTwitch($url, $clientId) {
-		$ch = curl_init();
-
-		$headers = [ "Client-ID: {$clientId}" ];
-	
-		curl_setopt($ch, CURLOPT_AUTOREFERER, TRUE);
-		curl_setopt($ch, CURLOPT_HEADER, 0);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);       
-		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-		
-		$data = curl_exec($ch);
-		curl_close($ch);
-		
-		return $data;
 	}
 
 	public function buildSortedStreams() {
@@ -1087,8 +1286,7 @@ class Builder extends Contained {
 			'title' => [ 'dir' => 'asc', 'type' => 'string' ],
 		];
 		
-		$sort = new Sort;
-		$streams = $sort->multiSort($streams, $sorts);
+		$streams = $this->sort->multiSort($streams, $sorts);
 		
 		return $streams;
 	}
@@ -1141,6 +1339,32 @@ class Builder extends Contained {
 		return $groups;
 	}
 	
+	public function buildTagParts($tag) {
+		$parts = [];
+		
+		$news = $this->builder->buildNewsByTag($tag);
+		
+		if ($news) {
+			$parts[] = [
+				'id' => 'news',
+				'label' => 'Новости',
+				'values' => $news,
+			];
+		}
+		
+		$events = $this->builder->buildEventsByTag($tag);
+		
+		if ($events) {
+			$parts[] = [
+				'id' => 'events',
+				'label' => 'События',
+				'values' => $events,
+			];
+		}
+		
+		return $parts;
+	}
+	
 	public function buildOnlineStream($filterByGame) {
 		$streams = $this->buildSortedStreams();
 	
@@ -1173,8 +1397,7 @@ class Builder extends Contained {
 			'last_issued_on' => [ 'dir' => 'desc', 'type' => 'string' ],
 		];
 
-		$sort = new Sort;
-		$series = $sort->multiSort($series, $sorts);
+		$series = $this->sort->multiSort($series, $sorts);
 		
 		return $series;
 	}
@@ -1357,38 +1580,17 @@ class Builder extends Contained {
 
 		return $page;
 	}
-	
-	private function dateToAgo($date) {
-		if ($date) {
-			$now = new \DateTime;
-			$today = new \DateTime("today");
-			$yesterday = new \DateTime("yesterday");		
 
-			$dt = new \DateTime($date);
-	
-			if ($dt > $today) {
-				$str = 'сегодня';
-			}
-			elseif ($dt > $yesterday) {
-				$str = 'вчера';
-			}
-			else {
-				$interval = $dt->diff($now);
-				$days = $interval->d;
-				$str = $days . ' ' . $this->cases->caseForNumber('день', $days) . ' назад';
-			}
-		}
-		
-		return $str ?? 'неизвестно когда';
-	}
-	
-	private function getSubArticles($parentId) {
+	private function getSubArticles($parentId, $recursive = false) {
 		$rows = $this->db->getSubArticles($parentId);
 		if ($rows) {
 			foreach ($rows as $row) {
 				$item = $this->buildArticleLink($row);
-				$item['items'] = $this->getSubArticles($row['id']);
-				$items[] = $item;
+				
+				if ($recursive) {
+					$item['items'] = $this->getSubArticles($row['id'], true);
+					$items[] = $item;
+				}
 			}
 		}
 
@@ -1398,6 +1600,61 @@ class Builder extends Contained {
 	public function buildMap() {
 		$rootId = $this->getSettings('legacy.articles.root_id');
 		
-		return $this->getSubArticles($rootId);
+		return $this->getSubArticles($rootId, true);
+	}
+	
+	public function buildEvents($rows) {
+		return array_map(function($row) {
+			return $this->buildEvent($row);
+		}, $rows);
+	}
+	
+	public function buildEvent($event) {
+		$event['game'] = $event['game_id']
+			? $this->db->getGame($event['game_id'])
+			: $this->db->getDefaultGame();
+
+		$event['pub_date'] = strtotime($event['published_at']);
+		
+		$event = $this->stamps($event, true);
+
+		$event['start_date'] = $event['starts_at'];
+		$event['end_date'] = $event['ends_at'];
+
+		$event['url'] = $this->router->event($event['id']);
+		$event['title'] = $event['name'];
+
+		$region = $this->db->getRegion($event['region_id']);
+		$region['title'] = $region['name_ru'] . ($region['name_en'] ? " ({$region['name_en']})" : '' );
+		$event['region'] = $region;
+		
+		$event['type'] = $this->db->getEventType($event['type_id']);
+
+		$event['tags'] = $this->tags($event['tags'], Taggable::EVENTS);
+
+		return $event;
+	}
+	
+	public function buildEventsByTag($tag) {
+		$tag = Strings::normalize($tag);
+		
+		$events = $this->db->getEventsByTag($tag);
+
+		$events = array_map(function($e) {
+			return $this->buildEvent($e);
+		}, $events);
+		
+		return $this->sortByDate($events);
+	}
+	
+	protected function tags($tags, $tab = null) {
+		return array_map(function($t) use ($tab) {
+			$tag = trim($t);
+			
+			return [
+				'text' => $tag,
+				'url' => $this->router->tag($tag, $tab),
+			];
+		}, explode(',', $tags));
 	}
 }

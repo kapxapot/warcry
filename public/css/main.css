@@ -195,21 +195,35 @@ a:focus {
 }
 
 .panel-title {
-  font-size: 140%;
+	font-size: 140%;
+	display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.panel-title span,
-.panel-title a,
-.panel-title a:hover,
-.panel-title a:focus {
-  min-height: 32px;
-  padding-top: 1px;
-  color: white;
-  padding-left: 42px;
-  display: block;
-  background-size: 32px 32px;
-  background-position: left;
-  background-repeat: no-repeat;
+.panel-title header {
+	min-height: 32px;
+	padding-top: 1px;
+	padding-left: 42px;
+	display: inline-block;
+	background-size: 32px 32px;
+	background-position: left;
+	background-repeat: no-repeat;
+}
+
+.panel-title header,
+.panel-title header a,
+.panel-title header a:hover,
+.panel-title header a:focus {
+	color: white;
+}
+
+.panel-title a.btn {
+	/*margin-top: 2px;*/
+}
+
+.panel-title .panel-title-buttons {
+	margin-left: 12px;
 }
 
 .panel-title small {
@@ -223,6 +237,7 @@ a:focus {
 
 #main .panel-title {
 	padding-left: 12px;
+	padding-right: 12px;
 }
 
 #main .panel-body, #main .panel-footer {
@@ -250,11 +265,15 @@ a:focus {
 	margin-bottom: 0;
 }
 
+.news p + ul {
+	padding-top: 0;
+}
+
 #article ul:first-child, .news ul:first-child {
 	padding-top: 0;
 }
 
-#article ul:last-child, .news ul:last-child, #article p:last-child, .news p:last-child {
+#article ul:last-child, .news ul:last-child, #article p:last-child, .news p:last-child, .panel-body p:last-child {
 	margin-bottom: 0;
 }
 
@@ -286,7 +305,7 @@ a:focus {
 	margin-top: 20px;
 }
 
-.news .img + p {
+.news .img + p, .news .quote + p, .news .bluepost + p {
 	padding-top: 10px;
 }
 
@@ -423,10 +442,12 @@ fieldset[disabled] .btn-primary.focus {
 	padding: .1em .3em .1em;
 	font-size: 100%;
 	font-weight: normal;
+	line-height: 1.6em;
 }
 
-.linkblock {
+.linkblock, .linkblock-big {
 	padding: 2px 0px;
+	margin-bottom: -1px;
 }
 
 .linkblock a {
@@ -439,14 +460,35 @@ fieldset[disabled] .btn-primary.focus {
 	border-width: 0px 0px 1px 0px;
 }
 
-.linkblock a:last-child {
+.linkblock-big div {
+	padding: 8px 10px 8px 53px;
+	display: block;
+	background-size: 32px 32px;
+	background-position: left 10px center;
+	background-repeat: no-repeat;
+	border: solid #ddd;
+	border-width: 0px 0px 1px 0px;
+}
+
+.linkblock-big .noicon {
+	padding-left: 12px;
+}
+
+.linkblock a:last-child, .linkblock-big div:last-child {
 	border: 0;
 	margin-bottom: -1px;
+}
+
+.linkblock a:last-child {
 	border-radius: 0 0 7px 7px;
 }
 
-.linkblock a:nth-of-type(even) {
+.linkblock a:nth-of-type(even), .linkblock-big div:nth-of-type(even) {
 	background-color: #eee;
+}
+
+.tab-content .linkblock-big {
+	margin-top: 5px;
 }
 
 .icon-starcraft {
@@ -546,7 +588,8 @@ fieldset[disabled] .btn-primary.focus {
 }
 
 .all-news {
-	font-weight: bolder;
+	display: flex;
+	justify-content: center;
 	margin-top: 7px;
 }
 
@@ -970,10 +1013,21 @@ a.blue:hover { color: white; }
 	padding: 0;
 }
 
-.stream-description {
-	padding-top: 15px;
-	padding-left: 7px;
-	padding-right: 7px;
+.stream-footer {
+	padding: 12px;
+}
+
+.stream-footer .tab-pane {
+	margin-top: 10px;
+}
+
+.stream-footer #chat {
+	margin-top: 0px;
+}
+
+#stats svg {
+	width: 500px;
+	height: 400px;
 }
 
 /*.stream-description p:last-child {
@@ -987,7 +1041,6 @@ a.blue:hover { color: white; }
 .stream-logo {
 	width: 100px;
 	height: auto;
-	margin-bottom: 15px;
 }
 
 .streams-telegram {
@@ -1025,6 +1078,10 @@ h3:first-child, h4:first-child {
 	color: black;
     /*opacity: 0.50;
     filter:alpha(opacity=50);*/
+}
+
+.comic .gallery-picture-nav {
+	margin-bottom: 0;
 }
 
 /* map */
@@ -1318,4 +1375,58 @@ h3:first-child, h4:first-child {
 
 .recipe-node-arrow, .recipe-node-arrow:hover, .recipe-node-arrow:active, .recipe-node-arrow:visited {
 	color: black;
+}
+
+/* charts */
+
+@media (max-width: 767px) {
+	#games .chart-container {
+		height: 300px;
+	}
+}
+
+@media (min-width: 768px) {
+	#games .chart-container {
+		height: 400px;
+	}
+}
+
+.legend {
+	padding-left: 0;
+	text-align: center;
+	list-style: none;
+	font-size: 85%;
+}
+
+.legend li {
+	display: inline-block;
+	margin-left: 20px;
+}
+
+.legend li:first-child {
+	margin-left: 0;
+}
+
+.legend li span {
+	margin-right: 5px;
+}
+
+.chart-footer {
+	margin-top: 10px;
+}
+
+.legend-line span {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	border-style: solid;
+	border-width: 2px;
+}
+
+/* misc */
+
+.create-block {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 10px;
 }

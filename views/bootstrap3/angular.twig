@@ -97,11 +97,13 @@
 			});
 		}
 		
+		focusOnModals();
+		
 		{% if not auth.user %}
 			$scope.refreshCaptcha = function() {
-				$http.get('/api/v1/captcha').success(function(data) {
+				$http.get('{{ api }}captcha').success(function(data) {
 					$scope.captcha = data['captcha'];
-					$('#signUpForm').find('#captcha').val(null)
+					$('#signUpForm').find('#captcha').val(null);
 				});
 			}
 			
@@ -111,9 +113,15 @@
 				showModal('signUp');
 			}
 			
-			$scope.signIn = function() {
+			$scope.signIn = function(targetUrl) {
+				$scope.targetUrl = targetUrl;
+
 				showModal('signIn');
 			}
+			
+			$scope.signInSuccess = function(data) {
+    			signedIn(data, $scope.targetUrl, $scope.rememberMe);
+    		}
 			
 			$scope.switchFromTo = function(from, to) {
 				hideModal(from);
@@ -132,18 +140,20 @@
 				$scope.prePost(e);
 
 		    	var obj = {
-		    		login: $('#signUpForm').find('#login').val(),
-		    		name: $('#signUpForm').find('#name').val(),
-		    		email: $('#signUpForm').find('#email').val(),
-		    		password: $('#signUpForm').find('#password').val(),
-		    		captcha: $('#signUpForm').find('#captcha').val(),
+		    		login: $('#signUpForm').find('#su_login').val(),
+		    		name: $('#signUpForm').find('#su_name').val(),
+		    		email: $('#signUpForm').find('#su_email').val(),
+		    		password: $('#signUpForm').find('#su_password').val(),
+		    		captcha: $('#signUpForm').find('#su_captcha').val(),
 		    	};
+		    	
+		    	$scope.rememberMe = $('#signUpForm').find('#su_remember').is(':checked');
 
 		    	$scope.ajax({
 		    		url: '{{ path_for('auth.signup') }}',
 		    		data: obj,
 		    		view: 'signUp',
-		    		onSuccess: signedIn,
+		    		onSuccess: $scope.signInSuccess,
 		    		noSuccessMessage: true,
 		    		onError: $scope.refreshCaptcha,
 		    	});
@@ -153,24 +163,25 @@
 				$scope.prePost(e);
 				
 		    	var obj = {
-		    		login: $('#signInForm').find('#login').val(),
-		    		password: $('#signInForm').find('#password').val(),
+		    		login: $('#signInForm').find('#si_login').val(),
+		    		password: $('#signInForm').find('#si_password').val(),
 		    	};
+		    	
+		    	$scope.rememberMe = $('#signInForm').find('#si_remember').is(':checked');
 
 		    	$scope.ajax({
 		    		url: '{{ path_for('auth.signin') }}',
 		    		data: obj,
 		    		view: 'signIn',
-		    		onSuccess: signedIn,
+		    		onSuccess: $scope.signInSuccess,
 		    		noSuccessMessage: true,
 		    		onError: function() {
-		    			$('#signInForm').find('#password').val(null);
+		    			//$('#signInForm').find('#si_password').val(null);
 		    		},
 		    	});
 		    });
 
 		    {% if signin_onload %}
-				focusOnModals();
 		    	$scope.signIn();
 		    {% endif %}
 		{% else %}
@@ -190,8 +201,8 @@
 				$scope.prePost(e);
 				
 		    	var obj = {
-		    		password_old: $('#passwordChangeForm').find('#password_old').val(),
-		    		password: $('#passwordChangeForm').find('#password').val(),
+		    		password_old: $('#passwordChangeForm').find('#pc_password_old').val(),
+		    		password: $('#passwordChangeForm').find('#pc_password').val(),
 		    	};
 
 		    	$scope.ajax({
@@ -201,8 +212,6 @@
 		    	});
 			});
 		{% endif %}
-					    
-		focusOnModals();
 
 		{{ more_angular }}
 	}]);

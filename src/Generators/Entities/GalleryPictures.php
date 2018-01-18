@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Route\Generators\Entities;
+namespace App\Generators\Entities;
 
-use App\Route\Generators\EntityGenerator;
+use App\Generators\EntityGenerator;
 
 class GalleryPictures extends EntityGenerator {
 	public function getRules($data, $id = null) {
@@ -35,13 +35,15 @@ class GalleryPictures extends EntityGenerator {
 		return $item;
 	}
 	
-	public function getAdminParams($params, $args) {
+	public function getAdminParams($args) {
+		$params = parent::getAdminParams($args);
+
 		$authorId = $args['id'];
 		$author = $this->db->getEntityById('gallery_authors', $authorId);
 
 		$params['source'] = "gallery_authors/{$authorId}/gallery_pictures";
 		$params['breadcrumbs'] = [
-			[ 'text' => 'Галерея', 'link' => $this->router->pathFor('admin.gallery_authors') ],
+			[ 'text' => 'Галерея', 'link' => $this->router->pathFor('admin.entities.gallery_authors') ],
 			[ 'text' => $author['name'] ],
 			[ 'text' => 'Картинки' ],
 		];

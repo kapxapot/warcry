@@ -40,7 +40,9 @@ class NewsParser extends Contained {
 		if ($cutpos !== false) {
 			if (!$full) {
 				$post = substr($post, 0, $cutpos);
-				$url = $this->legacyRouter->newsAbs($id);
+				$url = $this->legacyRouter->news($id);
+				$url = $this->legacyRouter->abs($url);
+				
 				$post .= "<div class=\"read-more\"><a href=\"{$url}\">Читать дальше &raquo;&raquo;</a></div>";
 			}
 			else {
@@ -61,11 +63,12 @@ class NewsParser extends Contained {
 
 		// fking smileys
 		$str = str_replace("<img src='{$siteUrl}/forum/public/style_emoticons", "<imgr src='/forum/public/style_emoticons", $str);
-	
+		$str = str_replace("<img src=\"{$siteUrl}/forum/style_emoticons", "<imgr src=\"/forum/style_emoticons", $str);
+
 		$str = str_replace("<#EMO_DIR#>", "default", $str);
-		$str = str_replace("=/", "={$siteUrl}/", $str);
-		$str = str_replace("=\"/", "=\"{$siteUrl}/", $str);
-	
+		
+		$str = $this->makeAbsolute($str);
+
 		while (preg_match("/(<a href='[^']*\.(jpg|gif|jpeg|png)')>/i", $str, $matches)) {
 			$str = str_replace($matches[0], $matches[1]." rel=\"colorbox\">", $str);
 		}
@@ -87,6 +90,15 @@ class NewsParser extends Contained {
 		$str = $this->parseSpoiler($str);
 	
 		return $str;
+	}
+	
+	public function makeAbsolute($text) {
+		$siteUrl = $this->getSettings('view_globals.site_url');
+
+		$text = str_replace("=/", "={$siteUrl}/", $text);
+		$text = str_replace("=\"/", "=\"{$siteUrl}/", $text);
+		
+		return $text;
 	}
 	
 	private function parseTopic($str) {
@@ -224,32 +236,7 @@ class NewsParser extends Contained {
 	
 		return $newstr;
 	}
-	
-	private function divBlock($id, $title, $body, $visible = false) {
-		$shortid = "short".$id;
-		$fullid = "full".$id;
-	
-		if ($visible) {
-			$shortstyle = "none";
-			$fullstyle = "block";
-		}
-		else {
-			$shortstyle = "block";
-			$fullstyle = "none";
-		}
-	
-		$short = "<div id=\"{$shortid}\" style=\"display:{$shortstyle};\">
-				<span class=\"spoiler-header\" onclick=\"{$fullid}.style.display='block'; {$shortid}.style.display='none';\">{$title} <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span></span>
-				</div>";
-	
-		$full = "<div id=\"{$fullid}\" style=\"display:{$fullstyle};\">
-				<span class=\"spoiler-header\" onclick=\"{$fullid}.style.display='none';{$shortid}.style.display='block';\">{$title} <span class=\"glyphicon glyphicon-minus\" aria-hidden=\"true\"></span></span>
-				<div class=\"spoiler-body\">{$body}</div>
-			</div>";
-	
-		return $short.$full;
-	}
-	
+
 	private function parseSpoiler($str) {
 		$newstr = "";
 	
@@ -260,16 +247,11 @@ class NewsParser extends Contained {
 				$content = $matches[2];
 				
 				$label = "Спойлер";
-				if (preg_match("/=(.*)/", $attrs, $matches))
-				{
+				if (preg_match("/=(.*)/", $attrs, $matches)) {
 					$label = $matches[1];
 				}
-	
-				$did = mt_rand();
-	
-				$div = DivBlock($did, $label, "<br/>".$content);
-	
-				$newstr .= "<div class=\"spoiler\">".$div."</div>";
+				
+				$newstr .= $this->legacyDecorator->spoilerBlock($content, $label);
 			}
 			else {
 				$newstr .= $part;

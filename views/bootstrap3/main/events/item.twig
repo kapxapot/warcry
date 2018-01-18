@@ -1,0 +1,40 @@
+{% extends 'main/layout.twig' %}
+
+{% import 'main/macros.twig' as m %}
+
+{% block content %}
+	<div class="panel panel-primary">
+		<div class="panel-heading panel-title">
+			<header class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ title }}</header>
+			{{ m.edit_button('events', event.id, event.access.edit) }}
+		</div>
+	  	<div class="panel-body breadcrumbs">
+	  		<ol class="breadcrumb">
+	  			<li><a href="{{ path_for('main.index') }}">{{ site_name }}</a></li>
+	  			{#% if not game.default %}<li><a href="{{ game.url }}">{{ game.name }}</a></li>{% endif %#}
+	  			<li><a href="{{ path_for('main.events') }}">{{ events_title }}</a></li>
+	  			<li class="active">{{ title }}</li>
+			</ol>
+		</div>
+	  	<div class="panel-body">
+	 		<p><b>Дата начала:</b> {{ event.starts_at }}</p>
+			{% if event.ends_at %}
+	  			<p><b>Дата конца:</b> {{ event.ends_at }}</p>
+			{% endif %}
+			<p><b>Тип мероприятия:</b> {{ event.type.name }}</p>
+			<p><b>Место проведения:</b> {{ event.region.title }}</p>
+			{% if event.description %}
+	  			<p>{{ event.description|raw }}</p>
+			{% endif %}
+		</div>
+		{% if event.tags %}
+			<div class="panel-footer">
+				<div class="glyphicon-block"><span class="glyphicon glyphicon-tag" aria-hidden="true" title="Теги"></span>
+		    		{% for tag in event.tags %}
+	    				<a href="{{ tag.url }}" title="Тег: {{ tag.text }}" class="label label-default">{{ tag.text }}</a>
+		    		{% endfor %}
+				</div>
+			</div>
+		{% endif %}
+	</div>
+{% endblock %}

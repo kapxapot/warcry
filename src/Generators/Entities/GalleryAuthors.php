@@ -1,15 +1,20 @@
 <?php
 
-namespace App\Route\Generators\Entities;
+namespace App\Generators\Entities;
 
-use App\Route\Generators\EntityGenerator;
+use App\Generators\EntityGenerator;
 
 class GalleryAuthors extends EntityGenerator {
 	public function getRules($data, $id = null) {
-		return [
+		$rules = [
 			'name' => $this->rule('text')->galleryAuthorNameAvailable($id),
-			'alias' => $this->rule('alias')->galleryAuthorAliasAvailable($id),
 		];
+		
+		if (array_key_exists('alias', $data)) {
+			$rules['alias'] = $this->rule('alias')->galleryAuthorAliasAvailable($id);
+		}
+		
+		return $rules;
 	}
 	
 	public function getOptions() {

@@ -1,9 +1,9 @@
 {% extends 'main/layout.twig' %}
 
 {% block content %}
-	<div class="panel panel-primary">
+	<div class="panel panel-primary comic">
 		<div class="panel-heading panel-title">
-		  <span class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ series.name_ru }} {{ comic.number_str }}{% if series.name_en %} <small>({{ series.name_en }})</small>{% endif %}</span>
+			<header class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ series.name_ru }} {{ comic.number_str }}{% if series.name_en %} <small>({{ series.name_en }})</small>{% endif %}</header>
 		</div>
 	  	<div class="panel-body breadcrumbs">
 	  		<ol class="breadcrumb">
@@ -39,5 +39,6 @@
 				</nav>			
 			</div>
 		</div>
+	    {% include 'main/comics/comic_footer.twig' %}
 	</div>
 {% endblock %}

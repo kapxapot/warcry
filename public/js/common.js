@@ -57,9 +57,15 @@ function hideModal(name) {
 	$('#' + name + 'View').modal('hide');
 }
 
-function signedIn(data) {
-	saveToken(data['token']);
-	location.reload();
+function signedIn(data, targetUrl, withCookie) {
+	saveToken(data['token'], withCookie);
+
+	if (targetUrl) {
+		location.href = targetUrl;
+	}
+	else {
+		location.reload();
+	}
 }
 
 function signedOut(data) {
@@ -69,8 +75,12 @@ function signedOut(data) {
 
 var auth_token_key = 'auth_token';
 
-function saveToken(token) {
+function saveToken(token, cookie = false) {
 	localStorage.setItem(auth_token_key, token);
+	
+	if (cookie) {
+		saveCookie(auth_token_key, token);
+	}
 }
 
 function loadToken() {
@@ -79,10 +89,46 @@ function loadToken() {
 
 function deleteToken() {
 	localStorage.removeItem(auth_token_key);
+	
+	deleteCookie(auth_token_key);
 }
 
 function hasToken() {
 	return loadToken();
+}
+
+function saveCookie(name, value, days) {
+	var expires;
+	
+	if (days) {
+		var date = new Date();
+		date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+		expires = "; expires=" + date.toGMTString();
+	}
+	else {
+		expires = "";
+	}
+
+	document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + expires + "; path=/";
+}
+
+function loadCookie(name) {
+	var nameEq = encodeURIComponent(name) + "=";
+	var ca = document.cookie.split(';');
+
+	for(var i=0; i < ca.length; i++) {
+		var c = ca[i];
+		while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+		if (c.indexOf(nameEq) === 0) {
+			return decodeURIComponent(c.substring(nameEq.length, c.length));
+		}
+	}
+	
+	return null;
+}
+
+function deleteCookie(name) {
+	saveCookie(name, "", -1);
 }
 
 function getHeaders() {

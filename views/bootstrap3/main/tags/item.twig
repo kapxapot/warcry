@@ -1,0 +1,42 @@
+{% extends 'main/layout.twig' %}
+
+{% block content %}
+	<div class="panel panel-primary">
+		<div class="panel-heading panel-title">
+			<header class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ title }}</header>
+		</div>
+	  	<div class="panel-body breadcrumbs">
+	  		<ol class="breadcrumb">
+	  			<li><a href="{{ path_for('main.index') }}">{{ site_name }}</a></li>
+	  			{% if not game.default %}<li><a href="{{ game.url }}">{{ game.name }}</a></li>{% endif %}
+	  			<li class="active">{{ title }}</li>
+			</ol>
+		</div>
+		{% if parts|length > 0 %}
+			<div class="panel-body">
+				<ul class="nav nav-tabs" role="tablist">
+			  		{% for part in parts %}
+						<li role="presentation"{% if loop.first %} class="active"{% endif %}><a href="#{{ part.id }}" aria-controls="{{ part.label }}" role="tab" data-toggle="tab" title="{{ part.label }}">{{ part.label }}</a></li>
+					{% endfor %}
+				</ul>
+	
+				<div class="tab-content">
+					{% for part in parts %}
+						<div role="tabpanel" class="tab-pane fade{% if loop.first %} in active{% endif %} linkblock-big" id="{{ part.id }}">
+							{% for v in part.values %}
+								<div class="icon-{{ v.game.alias }}">
+									<a title="[{{ v.game.name }}] {{ v.title|raw }}" href="{{ v.url }}">{{ v.title|raw }}</a>
+									<span class="nowrap">[{{ v.start_date }}{% if v.end_date %} — {{ v.end_date }}{% endif %}]</span>
+								</div>
+							{% endfor %}
+						</div>
+					{% endfor %}
+				</div>
+			</div>
+		{% else %}
+			<div class="panel-body">
+				По тегу <b>&laquo;{{ tag }}&raquo;</b> ничего не найдено.
+			</div>
+		{% endif %}
+	</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Route\Generators\Entities;
+namespace App\Generators\Entities;
 
 class ComicStandalonePages extends ComicPagesBase {
 	public function getOptions() {
@@ -10,14 +10,16 @@ class ComicStandalonePages extends ComicPagesBase {
 		];
 	}
 
-	public function getAdminParams($params, $args) {
+	public function getAdminParams($args) {
+		$params = parent::getAdminParams($args);
+
 		$comicId = $args['id'];
 		$comic = $this->db->getEntityById('comic_standalones', $comicId);
 		$game = $this->db->getEntityById('games', $comic['game_id']);
 
 		$params['source'] = "comic_standalones/{$comicId}/comic_standalone_pages";
 		$params['breadcrumbs'] = [
-			[ 'text' => 'Комиксы', 'link' => $this->router->pathFor('admin.comic_standalones') ],
+			[ 'text' => 'Комиксы', 'link' => $this->router->pathFor('admin.entities.comic_standalones') ],
 			[ 'text' => $game ? $game['name'] : '(нет игры)' ],
 			[ 'text' => $comic['name_ru'] ],
 			[ 'text' => 'Страницы' ],

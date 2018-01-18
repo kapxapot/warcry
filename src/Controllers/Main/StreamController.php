@@ -16,6 +16,7 @@ class StreamController extends BaseController {
 		$groups = $this->builder->buildStreamGroups($streams);
 
 		$params = $this->buildParams([
+			'sidebar' => [ 'create.streams' ],
 			'params' => [
 				'title' => $this->streamsTitle,
 				'streams' => $streams,
@@ -36,10 +37,13 @@ class StreamController extends BaseController {
 		}
 		
 		$stream = $this->builder->buildStream($row);
+		$stats = $this->builder->buildStreamStats($stream);
 
 		$params = $this->buildParams([
+			'sidebar' => [ 'create.streams' ],
 			'params' => [
 				'stream' => $stream,
+				'stats' => $stats,
 				'title' => $stream['title'],
 				'streams_title' => $this->streamsTitle,
 			],

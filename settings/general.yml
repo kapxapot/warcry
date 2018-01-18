@@ -3,7 +3,7 @@ addContentLengthHeader: false
 
 # constants for PHP code
 log_errors: true
-debug: true
+debug: false
 
 # validation
 password_min: 5
@@ -17,6 +17,8 @@ token_ttl: 168
 
 # folders for PHP code
 folders:
+  base: ''
+  api: /api/v1/
   lib: /../../../../lib/
   gallery_pictures: /../../../../../gallery/pictures/
   gallery_thumbs: /../../../../../gallery/pictures/thumb/

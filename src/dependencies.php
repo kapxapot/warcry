@@ -49,11 +49,11 @@ $container['comics'] = function($c) {
 };
 
 $container['resolver'] = function($c) {
-	return new \App\Route\GeneratorResolver($c);
+	return new \App\Generators\Resolver($c);
 };
 
 $container['cases'] = function($c) {
-	return new \Warcry\Util\Cases($c);
+	return new \Warcry\Util\Cases;
 };
 
 $container['view'] = function($c) {
@@ -82,19 +82,31 @@ $container['view'] = function($c) {
 	$view['auth'] = [
 		'check' => $c->auth->check(),
 		'user' => $c->auth->getUser(),
-		'role' => $c->auth->getRole()
+		'role' => $c->auth->getRole(),
+		'editor' => $c->auth->isEditor(),
 	];
 	
 	$view['image_types'] = $c->gallery->buildTypesString();
 	
 	$view['tables'] = $settings['tables'];
 	$view['entities'] = $settings['entities'];
+	
+	$view['api'] = $settings['folders']['api'];
 
     return $view;
 };
 
 $container['cache'] = function($c) {
 	return new \Warcry\Cache($c);
+};
+
+$container['session'] = function($c) {
+    $settings = $c->get('settings');
+    $base = $settings['folders']['base'];
+    
+	$name = 'sessionContainer' . $base;
+	
+	return new \Warcry\Session($name);
 };
 
 $container['validator'] = function($c) {
@@ -125,7 +137,7 @@ $container['db'] = function($c) use ($dbs) {
 	\ORM::configure("password", $dbs['password']);
 	\ORM::configure("driver_options", array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 	
-	return new \App\DB\DbHelper($c);
+	return new \App\DB\DbLayer($c);
 };
 
 $capsule = new \Illuminate\Database\Capsule\Manager;
@@ -187,4 +199,14 @@ if ($debug !== true) {
 
 $container['notAllowedHandler'] = function($c) {
 	return new \App\Handlers\NotAllowedHandler($c);
+};
+
+// external
+
+$container['twitch'] = function($c) {
+	return new \App\External\Twitch($c);
+};
+
+$container['telegram'] = function($c) {
+	return new \App\External\Telegram($c);
 };

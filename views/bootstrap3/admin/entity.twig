@@ -1,7 +1,8 @@
 {% extends 'admin/layout.twig' %}
 
 {% import 'admin/macros.twig' as m %}
-	
+
+{% set can_create = can(alias, 'create') %}
 {% set can_edit = can(alias, 'edit_own') %}
 {% set can_delete = can(alias, 'delete_own') %}
 
@@ -26,7 +27,7 @@
 {% endblock %}
 
 {% block title_appendix %}
-	{% if can(alias, 'create') %}
+	{% if can_create %}
 		<button type="button" class="btn btn-success button-create btn-pad" ng-click="createItem()">
 			<span class="glyphicon glyphicon-plus" title="Создать"></span>
 		</button>
@@ -78,7 +79,7 @@
 					var options = {
 				        element: this,
 				        spellChecker: false,
-				        toolbar: [ "bold", "italic", "strikethrough", "heading-1", "heading-2", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "table", "|", "preview", "side-by-side", "fullscreen" ],
+				        toolbar: [ {#"bold", "italic", "strikethrough", "heading-1", "heading-2", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "table", "|", "preview", "side-by-side", #}"fullscreen" ],
 				        status: false,
 				        forceSync: true
 				    };
@@ -149,7 +150,7 @@
 	
 	{% for col, value in columns if value.entity %}
 		promises.push(new Promise(function(resolve, reject) {
-			$http.get('/api/v1/{{ value.entity }}')
+			$http.get('{{ api }}{{ value.entity }}')
 				.success(function(data) {
 					$scope.{{ value.entity }} = data;
 					resolve(data);
@@ -250,8 +251,10 @@
 			{% if tables[alias].sort_index %}
 				order: [[ {{ tables[alias].sort_index }}, '{{ tables[alias].reverse ? 'desc' : 'asc' }}' ]],
 			{% endif %}
-			ajax: '/api/v1/{{ source ?? alias }}?format=dt',
-	        columns: [
+			ajax: '{{ api }}{{ source ?? alias }}?format=dt',
+			rowId: 'id',
+			initComplete: $scope.tableInitComplete,
+			columns: [
 				{% block table_columns %}
 					{% for col, value in columns if value.hidden is null %}
 						{
@@ -323,13 +326,24 @@
     			}
 			});
 		{% endif %}
-	};		
+	};
+	
+	$scope.setItem = function(i) {
+		$scope.itemId = (i != null) ? i.id : 0;
+		$scope.item = i;
+		
+		$scope.itemEditLabel = ($scope.item != null) ? 'Редактирование' : 'Создание';
+
+	    $timeout(function() {
+			$scope.$apply();
+		});
+	};
 	
 	$scope.createItem = function() {
 		$('#entityForm')[0].reset();
-		$scope.itemId = 0;
-		$scope.item = null;
 		
+		$scope.setItem(null);
+
 		{% for col, value in columns %}
 			{% if value.default is not null %}
 				$('#entityForm').find('#{{ col }}').val({{ value.default }});
@@ -355,9 +369,8 @@
 	};
 	
 	$scope.editItem = function(i) {
-		$scope.item = i;
-		$scope.itemId = i.id;
-	
+		$scope.setItem(i);
+
 		{% for col, value in columns %}
 			{% if value.readonly is null %}
 				{% if value.type == 'bool' %}
@@ -396,7 +409,7 @@
 		if (confirm('Действительно удалить {{ name_accus }}{{ delete_extra_message|raw }}?')) {
 			$scope.ajax({
 				method: 'delete',
-				url: '/api/v1/{{ alias }}/' + i.id,
+				url: '{{ api }}{{ alias }}/' + i.id,
 				onSuccess: $scope.refresh,
 				message: 'Запись успешно удалена.'
 			});
@@ -408,7 +421,7 @@
 
 		$scope.ajax({
 			method: ($scope.itemId == 0) ? 'post' : 'put',
-			url: '/api/v1/{{ alias }}' + (($scope.itemId == 0) ? '' : '/' + $scope.itemId),
+			url: '{{ api }}{{ alias }}' + (($scope.itemId == 0) ? '' : '/' + $scope.itemId),
 			data: obj,
 			view: 'entity',
 			onSuccess: $scope.refresh
@@ -453,6 +466,17 @@
 			$scope.submitData(obj);
 		}
     });
+    
+    $scope.tableInitComplete = function(settings, json) {
+	    {% if can_create and create_onload %}
+	    	$scope.createItem();
+	    {% elseif can_edit and edit_onload > 0 %}
+	    	var rowData = $scope.table.row('#{{ edit_onload }}').data();
+	    	if (rowData) {
+				$scope.editItem(rowData);
+	    	}
+	    {% endif %}
+	};
 
 	Promise.all(promises).then(function(results) {
 		$scope.initTable();

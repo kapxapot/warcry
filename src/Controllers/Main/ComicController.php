@@ -51,7 +51,7 @@ class ComicController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $series['game'],
-			'sidebar' => [ 'stream' ],
+			'sidebar' => [ 'stream', 'news' ],
 			'params' => [
 				'series' => $series,
 				'comics' => $comics,
@@ -103,7 +103,7 @@ class ComicController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $series['game'],
-			'sidebar' => [ 'stream' ],
+			'sidebar' => [ 'stream', 'news' ],
 			'params' => [
 				'series' => $series,
 				'comic' => $comic,
@@ -141,7 +141,7 @@ class ComicController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $comic['game'],
-			'sidebar' => [ 'stream' ],
+			'sidebar' => [ 'stream', 'news' ],
 			'params' => [
 				'comic' => $comic,
 				'pages' => $pages,

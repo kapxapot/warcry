@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Route;
+namespace App\Generators;
 
 use Warcry\Contained;
 use Warcry\Util\Util;
 
-class GeneratorResolver extends Contained {
+class Resolver extends Contained {
 	private function buildClassName($name) {
-		return __NAMESPACE__ . '\\Generators\\' . $name;
+		return __NAMESPACE__ . '\\' . $name;
 	}
 	
 	public function resolveEntity($entity) {

@@ -43,7 +43,7 @@
 {% block content %}
 	<div class="panel panel-primary">
 		<div class="panel-heading panel-title">
-		  <span class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ recipe.name_ru }}{% if recipe.name != recipe.name_ru %} <small>({{ recipe.name }})</small>{% endif %}</span>
+			<header class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ recipe.name_ru }}{% if recipe.name != recipe.name_ru %} <small>({{ recipe.name }})</small>{% endif %}</header>
 		</div>
 	  	<div class="panel-body breadcrumbs">
 	  		<ol class="breadcrumb">
@@ -71,7 +71,7 @@
 	  		{#<p class="nd_subtitle">Делаем с нуля</p>#}
 
 	  		<div class="recipe-base">
-		  		<p>Чтобы сделать этот предмет из <b>базовых реагентов</b>, понадобится следующее:</p>
+		  		<p>Чтобы сделать этот предмет из <b>базовых реагентов</b>, понадобится:</p>
 		  		
 				<ul>
 				    {% for r in recipe.base_reagents %}

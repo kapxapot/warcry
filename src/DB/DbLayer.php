@@ -2,12 +2,14 @@
 
 namespace App\DB;
 
+use Warcry\Util\Date;
 use Warcry\Util\Util;
 use Warcry\ORM\Idiorm\DbHelper as DbHelperBase;
 
 use App\DB\Tables;
+use App\DB\Taggable;
 
-class DbHelper extends DbHelperBase {
+class DbLayer extends DbHelperBase {
 	private function getTableHelper($table) {
 		return new TableHelper($this->container, $table);
 	}
@@ -20,6 +22,16 @@ class DbHelper extends DbHelperBase {
 			: $tableHelper->getTableRights();
 
 		return $access[$rights];
+	}
+	
+	protected function addRights($table, $item) {
+		$th = $this->getTableHelper($table);
+		return $th->addRights($item);
+	}
+	
+	protected function addRightsMany($table, $items) {
+		$th = $this->getTableHelper($table);
+		return array_values(array_map(array($th, 'addRights'), $items));
 	}
 
 	private function addUserNames($item) {
@@ -79,7 +91,7 @@ class DbHelper extends DbHelperBase {
 			unset($data['published']);
 		}
 
-		if (isset($data['password'])) {
+		if (array_key_exists('password', $data)) {
 			$password = $data['password'];
 			if (strlen($password) > 0) {
 				$data['password'] = Util::encodePassword($password);
@@ -127,7 +139,7 @@ class DbHelper extends DbHelperBase {
 		return $this->asArray($obj);
 	}
 	
-	protected function getObj($table, $id) {
+	public function getObj($table, $id) {
 		return $this
 			->forTable($table)
 			->where('id', $id)
@@ -144,6 +156,35 @@ class DbHelper extends DbHelperBase {
 		return $where($query)->findOne();
 	}
 	
+	protected function getProtected($table, $id, $where = null) {
+		$editor = $this->can($table, 'edit');
+		
+		$where = $where ?? function($q) use ($id) {
+			return $q->where('id', $id);
+		};
+
+		$result = $this->getBy($table, function($q) use ($where, $editor) {
+			$q = $where($q);
+
+			if (!$editor) {
+				$user = $this->auth->getUser();
+				
+				$published = "(published = 1 and published_at < now())";
+
+				if ($user) {
+					$q = $q->whereRaw("({$published} or created_by = ?)", [ $user->id ]);
+				}
+				else {
+					$q = $q->whereRaw($published);
+				}
+			}
+			
+			return $q;
+		});
+		
+		return $this->addRights($table, $result);
+	}
+
 	private function getManyBaseQuery($table, $where = null) {
 		$query = $this->forTable($table);
 
@@ -204,18 +245,22 @@ class DbHelper extends DbHelperBase {
 		return $this->getIdByField($table, 'name', $name, $where);
 	}
 
-	protected function setField($table, $id, $field, $value) {
-		return $this->set($table, $id, [ $field => $value ]);
+	protected function setFieldNoStamps($table, $id, $field, $value) {
+		return $this->set($table, $id, [ $field => $value ], false);
 	}
 	
-	protected function set($table, $id, $data) {
+	protected function setField($table, $id, $field, $value, $withStamps = true) {
+		return $this->set($table, $id, [ $field => $value ], $withStamps);
+	}
+	
+	protected function set($table, $id, $data, $withStamps = true) {
 		$obj = $this->getObj($table, $id);
 		
 		if (!$obj) {
 			$obj = $this->forTable($table)->create();
 			$obj->id = $id;
 		}
-		else {
+		elseif ($withStamps) {
 			$upd = $this->updatedAt($table);
 			if ($upd) {
 				$obj->updated_at = $upd;
@@ -241,56 +286,56 @@ class DbHelper extends DbHelperBase {
 
 	// returns article by id (id - numeric, name_en - text) and cat id (optional)
 	public function getArticle($id, $cat = null) {
-		$query = $this
-			->forTable(Tables::ARTICLES)
-			->where('published', 1)
-			->whereGte('parent_id', 0);
-
-		if (is_numeric($id)) {
-			$query = $query
-				->where('id', $id);
-		}
-		else {
-			$query = $query
-				->where('name_en', $id);
-
-			if ($cat) {
-				$catId = $this->getCatIdByName($cat);
-			}
-
-			if ($catId) {
-				$query = $query
-					->whereRaw('(cat = ? or cat is null)', [ $catId ])
-					->orderByDesc('cat');
+		return $this->getProtected(Tables::ARTICLES, $id, function($q) use ($id, $cat) {
+			if (is_numeric($id)) {
+				$q = $q->where('id', $id);
 			}
 			else {
-				$query = $query
-					->orderByAsc('cat');
+				$q = $q->where('name_en', $id);
+	
+				if ($cat) {
+					$catId = $this->getCatIdByName($cat);
+				}
+	
+				if ($catId) {
+					$q = $q
+						->whereRaw('(cat = ? or cat is null)', [ $catId ])
+						->orderByDesc('cat');
+				}
+				else {
+					$q = $q->orderByAsc('cat');
+				}
 			}
-		}
-
-		return $this->asArray($query->findOne());
+	
+			return $q;
+		});
 	}
 
 	// returns sub articles by article id (numeric strict)
 	public function getSubArticles($parentId) {
 		return $this->getMany(Tables::ARTICLES, function($q) use ($parentId) {
+			if ($parentId > 0) {
+				$q = $q->where('parent_id', $parentId);
+			}
+			else {
+				$q = $q->whereRaw('(parent_id = 0 or parent_id is null)');
+			}
+			
 			return $q
-				->where('parent_id', $parentId)
 				->where('published', 1)
 				->orderByAsc('name_ru');
 		});
 	}
 
-	public function getItemIdByName($name) {
+	public function getItemId($name) {
 		return $this->getIdByName(Tables::ITEMS, $name);
 	}
 
-	public function getNPCIdByName($name) {
+	public function getNPCId($name) {
 		return $this->getIdByName(Tables::NPC, $name);
 	}
 
-	public function getSpellIdByName($name, $skill = null) {
+	public function getSpellId($name, $skill = null) {
 		return $this->getIdByName(Tables::SPELLS, $name, function($q) use ($skill) {
 			return $skill
 				? $q->where('skill', $skill)
@@ -298,20 +343,20 @@ class DbHelper extends DbHelperBase {
 		});
 	}
 
-	public function getQuestIdByName($name) {
+	public function getQuestId($name) {
 		return $this->getIdByName(Tables::QUESTS, $name);
 	}
 
-	public function getLocationIdByName($name) {
+	public function getLocationId($name) {
 		return $this->getIdByName(Tables::LOCATIONS, $name);
 	}
 
 	public function saveArticleCache($id, $cache) {
-		$this->setField(Tables::ARTICLES, $id, 'cache', $cache);
+		$this->setFieldNoStamps(Tables::ARTICLES, $id, 'cache', $cache);
 	}
 
 	public function saveArticleContentsCache($id, $contentsCache) {
-		$this->setField(Tables::ARTICLES, $id, 'contents_cache', $contentsCache);
+		$this->setFieldNoStamps(Tables::ARTICLES, $id, 'contents_cache', $contentsCache);
 	}
 
 	// RECIPES
@@ -395,11 +440,11 @@ class DbHelper extends DbHelperBase {
 	}
 
 	public function setRecipeReagentCache($id, $reagentCache) {
-		$this->setField(Tables::RECIPES, $id, 'reagent_cache', $reagentCache);
+		$this->setFieldNoStamps(Tables::RECIPES, $id, 'reagent_cache', $reagentCache);
 	}
 
 	public function setRecipeIconCache($id, $iconCache) {
-		$this->setField(Tables::RECIPES, $id, 'icon_cache', $iconCache);
+		$this->setFieldNoStamps(Tables::RECIPES, $id, 'icon_cache', $iconCache);
 	}
 
 	public function getRecipe($id) {
@@ -471,8 +516,19 @@ class DbHelper extends DbHelperBase {
 		
 		return array_column($games, 'news_forum_id');
 	}
+	
+	private function topicsWithPosts($topics) {
+		return array_map(function($topic) {
+			$post = $this->getForumTopicPost($topic['tid']);
+			if ($post) {
+				$topic['post'] = $post['post'];
+			}
 
-	public function getLatestForumNews($filterByGame, $offset, $limit, $exceptNewsId = null) {
+			return $topic;
+		}, $topics);
+	}
+
+	public function getLatestForumNews($filterByGame = null, $offset = 0, $limit = 0, $exceptNewsId = null, $year = null) {
 		$forumIds = $this->getNewsForumIds($filterByGame);
 
 		$query = $this
@@ -483,21 +539,25 @@ class DbHelper extends DbHelperBase {
 			$query = $query->whereNotEqual('tid', $exceptNewsId);
 		}
 
-		$query = $query
-			->orderByDesc('start_date')
-			->offset($offset)
-			->limit($limit);
+		$query = $query->orderByDesc('start_date');
+			
+		if ($offset > 0 || $limit > 0) {
+			$query = $query
+				->offset($offset)
+				->limit($limit);
+		}
+		
+		if ($year > 0) {
+			$query = $query->whereRaw('(year(from_unixtime(start_date)) = ?)', [ $year ]);
+		}
 
 		$topics = $this->getArray($query);
 
-		return array_map(function($topic) {
-			$post = $this->getForumTopicPost($topic['tid']);
-			if ($post) {
-				$topic['post'] = $post['post'];
-			}
+		return $this->topicsWithPosts($topics);
+	}
 
-			return $topic;
-		}, $topics);
+	public function getForumNewsByYear($year) {
+		return $this->getLatestForumNews(null, 0, 0, null, $year);
 	}
 	
 	public function getForumTopicPost($topicId) {
@@ -519,11 +579,11 @@ class DbHelper extends DbHelperBase {
 		return $news;
 	}
 
-	public function getLatestNews($filterByGame, $offset, $limit, $exceptNewsId = null) {
+	public function getLatestNews($filterByGame = null, $offset = 0, $limit = 0, $exceptNewsId = null, $year = null) {
 		$query = $this
 			->forTable(Tables::NEWS)
 			->where('published', 1)
-   			->whereRaw('(published_at < now())', []);
+   			->whereRaw('(published_at < now())');
 
 		if ($exceptNewsId) {
 			$query = $query->whereNotEqual('id', $exceptNewsId);
@@ -533,33 +593,125 @@ class DbHelper extends DbHelperBase {
 			$query = $query->where('game_id', $filterByGame['id']);
 		}
 
-		$query = $query
-			->orderByDesc('published_at')
-			->offset($offset)
-			->limit($limit);
+		$query = $query->orderByDesc('published_at');
+		
+		if ($offset > 0 || $limit > 0) {
+			$query = $query
+				->offset($offset)
+				->limit($limit);
+		}
+		
+		if ($year > 0) {
+			$query = $query->whereRaw('(year(published_at) = ?)', [ $year ]);
+		}
+
+		return $this->addRightsMany(Tables::NEWS, $this->getArray($query));
+	}
+
+	public function getNewsByYear($year) {
+		return $this->getLatestNews(null, 0, 0, null, $year);
+	}
+
+	public function saveTags($entityType, $entityId, $tags) {
+		if (!($entityId > 0)) {
+			throw new \InvalidArgumentException('Entity id must be positive');
+		}
+		
+		$this->deleteTags($entityType, $entityId);
+
+    	foreach ($tags as $tag) {
+    		if (strlen($tag) > 0) {
+    			$this->saveTag($entityType, $entityId, $tag);
+    		}
+    	}
+	}
+
+	public function deleteTags($entityType, $entityId) {
+		$this->forTable(Tables::TAGS)
+    		->where('entity_type', $entityType)
+    		->where('entity_id', $entityId)
+    		->delete_many();
+	}
+	
+	public function saveTag($entityType, $entityId, $tag) {
+		$t = $this->forTable(Tables::TAGS)->create();
+
+		$t->entity_type = $entityType;
+        $t->entity_id = $entityId;
+        $t->tag = $tag;
+
+		$t->save();
+	}
+	
+	private function getIdsByTag($entityType, $tag) {
+		$entities = $this->getMany(Tables::TAGS, function($q) use ($entityType, $tag) {
+			return $q
+				->where('entity_type', $entityType)
+				->where('tag', $tag);
+		});
+		
+		return array_column($entities, 'entity_id');
+	}
+	
+	private function getIdsByForumTag($app, $area, $tag) {
+		$entities = $this->getMany(Tables::FORUM_TAGS, function($q) use ($app, $area, $tag) {
+			return $q
+				->where('tag_meta_app', $app)
+				->where('tag_meta_area', $area)
+				->whereRaw('(lcase(tag_text) = ?)', [ $tag ]);
+		});
+		
+		return array_column($entities, 'tag_meta_id');
+	}
+	
+	public function getForumNewsByTag($tag) {
+		$ids = $this->getIdsByForumTag('forums', 'topics', $tag);
+
+		if (!$ids) {
+			return null;
+		}
+		
+		$forumIds = $this->getNewsForumIds();
+
+		$query = $this
+			->forTable(Tables::FORUM_TOPICS)
+			->whereIn('forum_id', $forumIds)
+			->whereIn('tid', $ids);
+
+		$query = $query->orderByDesc('start_date');
+
+		$topics = $this->getArray($query);
+
+		return $this->topicsWithPosts($topics);
+	}
+	
+	protected function getByTag($table, $taggable, $tag) {
+		$ids = $this->getIdsByTag($taggable, $tag);
+		
+		if (!$ids) {
+			return null;
+		}
+		
+		$query = $this
+			->forTable($table)
+			->where('published', 1)
+   			->whereRaw('(published_at < now())')
+   			->whereIn('id', $ids)
+			->orderByDesc('published_at');
 
 		return $this->getArray($query);
 	}
 	
+	public function getNewsByTag($tag) {
+		return $this->getByTag(Tables::NEWS, Taggable::NEWS, $tag);
+	}
+
 	public function getNews($id) {
-		$item = $this->get(Tables::NEWS, $id);
-		$can = $this->can(Tables::NEWS, 'edit_own', $item);
-		
-		return $this->getBy(Tables::NEWS, function($q) use ($id, $can) {
-			$q = $q->where('id', $id);
-			
-			if (!$can) {
-				$q = $q
-					->where('published', 1)
-					->whereRaw('(published_at < now())');
-			}
-			
-			return $q;
-		});
+		return $this->getProtected(Tables::NEWS, $id);
 	}
 
 	public function saveNewsCache($id, $cache) {
-		$this->setField(Tables::NEWS, $id, 'cache', $cache);
+		$this->setFieldNoStamps(Tables::NEWS, $id, 'cache', $cache);
 	}
 
 	public function getForumTopicTags($topicId) {
@@ -729,7 +881,7 @@ class DbHelper extends DbHelperBase {
 	public function getGalleryAuthorByAlias($alias) {
 		return $this->getBy(Tables::GALLERY_AUTHORS, function($q) use ($alias) {
 			return $q
-				->where('alias', $alias)
+				->whereRaw('(alias = ? or id = ?)', [ $alias, $alias ])
 				->where('published', 1);
 		});
 	}
@@ -985,25 +1137,51 @@ class DbHelper extends DbHelperBase {
 	
 	// STREAMS
 	
-    function getStreams() {
+	private function encodeStreamData($data) {
+		if ($data) {
+			$data['remote_status'] = urlencode($data['remote_status']);
+		}
+		
+		return $data;
+	}
+	
+	private function decodeStreamData($data) {
+		if ($data) {
+			$data['remote_status'] = urldecode($data['remote_status']);
+		}
+		
+		return $data;
+	}
+	
+	private function decodeManyStreamData($array) {
+		return array_map(array($this, 'decodeStreamData'), $array);
+	}
+	
+    public function getStreams() {
     	$streams = $this->getMany(Tables::STREAMS, function($q) {
     		return $q
     			->where('published', 1)
     			->orderByDesc('remote_viewers');
     	});
-    	
-    	return $streams;
+
+    	return $this->decodeManyStreamData($streams);
     }
     
-    function getStreamByAlias($alias) {
-    	return $this->getBy(Tables::STREAMS, function($q) use ($alias) {
+    public function getStreamByAlias($alias) {
+    	$stream = $this->getBy(Tables::STREAMS, function($q) use ($alias) {
     		return $q
     			->whereRaw('(stream_alias = ? or (stream_alias is null and stream_id = ?))', [ $alias, $alias ])
     			->where('published', 1);
     	});
+    	
+    	$stream = $this->decodeStreamData($stream);
+    	
+    	return $this->addRights(Tables::STREAMS, $stream);
     }
 	
 	public function saveStream($data) {
+		$data = $this->encodeStreamData($data);
+		
 		$stream = $this->getObj(Tables::STREAMS, $data['id']);
 
         $stream->remote_viewers = $data['remote_viewers'];
@@ -1022,14 +1200,18 @@ class DbHelper extends DbHelperBase {
 	}
 	
 	public function getLastStreamStats($streamId) {
-		return $this->getBy(Tables::STREAM_STATS, function($q) use ($streamId) {
+		$stats = $this->getBy(Tables::STREAM_STATS, function($q) use ($streamId) {
 			return $q
 				->where('stream_id', $streamId)
 				->orderByDesc('created_at');
 		});
+		
+    	return $this->decodeStreamData($stats);
 	}
 	
 	public function saveStreamStats($data) {
+		$data = $this->encodeStreamData($data);
+
 		$stats = $this->forTable(Tables::STREAM_STATS)->create();
 
 		$stats->stream_id = $data['id'];
@@ -1042,5 +1224,71 @@ class DbHelper extends DbHelperBase {
 	
 	public function finishStreamStats($id) {
 		$this->setField(Tables::STREAM_STATS, $id, 'finished_at', Util::now());
+	}
+	
+	public function getStreamGameStats($streamId) {
+		$stats = $this->getMany(Tables::STREAM_STATS, function($q) use ($streamId) {
+			$table = $this->getTableName(Tables::STREAM_STATS);
+			
+			return $q->rawQuery("
+				select remote_game, count(*) count
+				from {$table}
+				where length(remote_game) > 0 and stream_id = :stream_id
+				group by remote_game", [ 'stream_id' => intval($streamId) ]);
+		});
+		
+    	return $this->decodeManyStreamData($stats);
+	}
+	
+	public function getLatestStreamStats($streamId, $days = 1) {
+		$stats = $this->getMany(Tables::STREAM_STATS, function($q) use ($streamId, $days) {
+			$table = $this->getTableName(Tables::STREAM_STATS);
+			
+			return $q
+				->rawQuery("
+				select *
+				from {$table}
+				where created_at >= date_sub(now(), interval {$days} day) and length(remote_game) > 0 and stream_id = :stream_id", [ 'stream_id' => intval($streamId) ])
+				->orderByAsc('created_at');
+		});
+	
+	   	return $this->decodeManyStreamData($stats);
+	}
+	
+	public function getStreamStatsFrom($streamId, \DateTime $from) {
+		$stats = $this->getMany(Tables::STREAM_STATS, function($q) use ($streamId, $from) {
+			return $q
+				->where('stream_id', $streamId)
+				->whereGte('created_at', Date::formatDb($from))
+				->orderByAsc('created_at');
+		});
+
+    	return $this->decodeManyStreamData($stats);
+	}
+	
+	// events
+	
+	public function getEvents() {
+		return $this->getMany(Tables::EVENTS, function($q) {
+			return $q
+				->where('published', 1)
+				->whereRaw('(published_at < now())');
+		});
+	}
+	
+	public function getEvent($id) {
+		return $this->getProtected(Tables::EVENTS, $id);
+	}
+	
+	public function getRegion($id) {
+		return $this->get(Tables::REGIONS, $id);
+	}
+	
+	public function getEventType($id) {
+		return $this->get(Tables::EVENT_TYPES, $id);
+	}
+	
+	public function getEventsByTag($tag) {
+		return $this->getByTag(Tables::EVENTS, Taggable::EVENTS, $tag);
 	}
 }

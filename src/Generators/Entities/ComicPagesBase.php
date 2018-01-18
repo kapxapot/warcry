@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Route\Generators\Entities;
+namespace App\Generators\Entities;
 
-use App\Route\Generators\EntityGenerator;
+use App\Generators\EntityGenerator;
 
 class ComicPagesBase extends EntityGenerator {
 	public function afterLoad($item) {

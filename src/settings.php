@@ -58,26 +58,6 @@ if (array_key_exists('tables', $settings)) {
 			}
 		}
 	}
-	
-	// build menu
-	/*$entityMenu = [];
-	foreach ($settings['entities'] as $entity => $entitySettings) {
-		if (array_key_exists('menu_index', $entitySettings)) {
-			$entityMenu[$entitySettings['menu_index']] = [
-				'entity' => $entity,
-				'title' => $entitySettings['title'],
-			];
-		}
-	}
-
-	ksort($entityMenu);
-	
-	$flatEntityMenu = [];
-	foreach ($entityMenu as $entry) {
-		$flatEntityMenu[$entry['entity']] = $entry['title'];
-	}
-	
-	Arr::set($settings, "view_globals.entity_menu", $flatEntityMenu);*/
 }
 
 return [ 'settings' => $settings ];

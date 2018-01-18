@@ -23,7 +23,7 @@ class ArticleController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $article['game'],
-			'sidebar' => [ 'stream', 'articles' ],
+			'sidebar' => [ 'stream', 'create.articles', 'articles' ],
 			'article_id' => $id,
 			'params' => [
 				'disqus_url' => $this->legacyRouter->disqusArticle($article),

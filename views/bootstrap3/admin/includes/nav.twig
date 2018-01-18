@@ -27,7 +27,7 @@
 						  			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ entry.group.title }} <span class="caret"></span></a>
 									<ul class="dropdown-menu">
 										{% for entity in visible_items %}
-											<li{% if alias == entity %} class="active"{% endif %}><a href="{{ path_for('admin.' ~ entity) }}">{{ entities[entity].title }}</a></li>
+											<li{% if alias == entity %} class="active"{% endif %}><a href="{{ path_for('admin.entities.' ~ entity) }}">{{ entities[entity].title }}</a></li>
 										{% endfor %}
 	 								</ul>
 	 							</li>
@@ -35,7 +35,7 @@
 						{% else %}
 							{% set entity = entry %}
 							{% if can(entity, 'read_own') %}
-								<li{% if alias == entity %} class="active"{% endif %}><a href="{{ path_for('admin.' ~ entity) }}">{{ entities[entity].title }}</a></li>
+								<li{% if alias == entity %} class="active"{% endif %}><a href="{{ path_for('admin.entities.' ~ entity) }}">{{ entities[entity].title }}</a></li>
 							{% endif %}
 						{% endif %}
 					{% endfor %}

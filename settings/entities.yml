@@ -9,10 +9,6 @@ articles:
       name: id
       attributes: [ readonly ]
 
-    game_id:
-      name: Игра
-      entity: games
-
     parent_id:
       name: Родительская статья
       entity: articles
@@ -29,7 +25,8 @@ articles:
     name_ru:
       name: Заголовок
       template: >
-        (row.published == 1) ? '<a href="/article/' + row.name_en + '" target="_blank">' + row.name_ru + ' (' + row.name_en + ')</a>' : row.name_ru + ' (' + row.name_en + ')'
+        '<a href="/articles/' + row.name_en + '" target="_blank">' + row.name_ru + ' (' + row.name_en + ')</a>'
+#(row.published == 1) ? '<a href="/articles/' + row.name_en + '" target="_blank">' + row.name_ru + ' (' + row.name_en + ')</a>' : row.name_ru + ' (' + row.name_en + ')'
 
     name_en:
       name: Eng. Title
@@ -50,6 +47,11 @@ articles:
       type: html
       attributes: [ nullable, hidden ]
 
+    game_id:
+      name: Игра
+      entity: games
+      default: 1
+
     origin:
       name: Источник
       type: url
@@ -69,13 +71,20 @@ articles:
       attributes: [ hidden ]
 
     published:
-      name: Публичная
+      name: Опубликована
       form_name: Опубликовать
       type: bool
       access: publish
 
+    published_at:
+      name: Дата публикации
+      type: datetime-local
+      attributes: [ nullable, hidden ]
+      access: publish
+      tooltip: Оставьте пустой для автозаполнения.
+
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -126,13 +135,13 @@ comic_issues:
       attributes: [ hidden ]
 
     published:
-      name: Публичный
+      name: Опубликован
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -175,13 +184,13 @@ comic_pages:
       attributes: [ hidden ]
 
     published:
-      name: Публичная
+      name: Опубликована
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -210,7 +219,7 @@ comic_publishers:
       attributes: [ nullable, hidden ]
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -235,6 +244,7 @@ comic_series:
     game_id:
       name: Игра
       entity: games
+      default: 1
 
     name_ru:
       name: Название
@@ -259,13 +269,13 @@ comic_series:
       attributes: [ nullable, hidden ]
 
     published:
-      name: Публичная
+      name: Опубликована
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -304,6 +314,7 @@ comic_standalones:
     game_id:
       name: Игра
       entity: games
+      default: 1
 
     alias:
       name: Алиас
@@ -330,13 +341,13 @@ comic_standalones:
       attributes: [ hidden ]
 
     published:
-      name: Публичный
+      name: Опубликован
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -379,13 +390,109 @@ comic_standalone_pages:
       attributes: [ hidden ]
 
     published:
-      name: Публичная
+      name: Опубликована
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
+      attributes: [ readonly ]
+    
+    created_at:
+      name: Дата создания
+      type: date
+      attributes: [ readonly ]
+
+
+events:
+
+  name_gen: события
+  name_accus: событие
+  title: События
+
+  columns:
+    id:
+      name: id
+      attributes: [ readonly ]
+
+    name:
+      name: Название
+      template: >
+        '<a href="/events/' + row.id + '" target="_blank">' + row.name + '</a>'
+
+    type_id:
+      name: Тип
+      entity: event_types
+      attributes: [ hidden ]
+
+    starts_at:
+      name: Начало
+      type: datetime-local
+      attributes: [ hidden ]
+
+    ends_at:
+      name: Конец
+      type: datetime-local
+      attributes: [ nullable, hidden ]
+
+    website:
+      name: Веб-сайт
+      type: url
+      attributes: [ nullable, hidden ]
+
+    region_id:
+      name: Регион
+      entity: regions
+      attributes: [ hidden ]
+
+    game_id:
+      name: Игра
+      entity: games
+      attributes: [ nullable, hidden ]
+
+    description:
+      name: Описание
+      type: html
+      attributes: [ nullable, hidden ]
+
+    tags:
+      name: Теги
+      attributes: [ nullable, hidden ]
+      tooltip: Через запятую.
+
+    published:
+      name: Опубликовано
+      form_name: Опубликовать
+      type: bool
+      access: publish
+
+    created_by_name:
+      name: Автор
+      attributes: [ readonly ]
+    
+    created_at:
+      name: Дата создания
+      type: date
+      attributes: [ readonly ]
+
+
+event_types:
+
+  name_gen: типа событий
+  name_accus: тип событий
+  title: Типы событий
+
+  columns:
+    id:
+      name: id
+      attributes: [ readonly ]
+
+    name:
+      name: Название
+
+    created_by_name:
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -414,6 +521,9 @@ gallery_authors:
 
     alias:
       name: Алиас
+      access: publish
+      attributes: [ hidden ]
+      tooltip: Страница автора будет http://warcry.ru/gallery/{алиас}.
 
     deviant:
       name: Deviant
@@ -437,13 +547,13 @@ gallery_authors:
       attributes: [ nullable, hidden ]
         
     published:
-      name: Публичный
+      name: Опубликован
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -497,13 +607,13 @@ gallery_pictures:
       attributes: [ hidden ]
         
     published:
-      name: Публичная
+      name: Опубликована
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
 
     created_at:
@@ -551,7 +661,7 @@ games:
       default: 1
 
     published:
-      name: Публичная
+      name: Опубликована
       form_name: Опубликовать
       type: bool
       access: publish
@@ -644,27 +754,29 @@ news:
       name: id
       attributes: [ readonly ]
 
-    game_id:
-      name: Игра
-      entity: games
-
     title:
       name: Заголовок
       template: >
-        '<a href="/main/news/' + row.id + '" target="_blank">' + row.title + '</a>'
+        '<a href="/news/' + row.id + '" target="_blank">' + row.title + '</a>'
 
     text:
       name: Текст
       type: html
       attributes: [ hidden ]
 
+    game_id:
+      name: Игра
+      entity: games
+      default: 1
+
     tags:
       name: Теги
       attributes: [ nullable, hidden ]
-      tooltip: Через запятую
+      access: publish
+      tooltip: Через запятую.
 
     published:
-      name: Публичная
+      name: Опубликована
       form_name: Опубликовать
       type: bool
       access: publish
@@ -677,7 +789,37 @@ news:
       tooltip: Оставьте пустой для автозаполнения.
 
     created_by_name:
-      name: Пользователь
+      name: Автор
+      attributes: [ readonly ]
+    
+    created_at:
+      name: Дата создания
+      type: date
+      attributes: [ readonly ]
+
+
+regions:
+
+  name_gen: региона
+  name_accus: регион
+  title: Регионы
+
+  columns:
+    id:
+      name: id
+      attributes: [ readonly ]
+
+    name_ru:
+      name: Название
+
+    name_en:
+      name: Eng. Title
+      form_name: Английское название
+      attributes: [ nullable ]
+      tooltip: Укажите для зарубежного региона.
+
+    created_by_name:
+      name: Автор
       attributes: [ readonly ]
     
     created_at:
@@ -757,13 +899,13 @@ streams:
       attributes: [ hidden ]
 
     published:
-      name: Публичный
+      name: Опубликован
       form_name: Опубликовать
       type: bool
       access: publish
 
     created_by_name:
-      name: Пользователь
+      name: Автор
       attributes: [ readonly ]
     
     created_at:

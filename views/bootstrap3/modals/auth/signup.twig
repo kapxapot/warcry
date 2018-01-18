@@ -5,46 +5,30 @@
 {% set modal_save_label = 'Зарегистрироваться' %}
 
 {% block modal_body %}
-	<div class="form-group required{{ errors.login ? ' has-error' : '' }}">
-		<label for="login">Логин</label>
-		<input type="text" name="login" id="login" placeholder="от 3 до 20 латинских букв или цифр" class="form-control" data-modalfocus required />
-		{% if errors.login %}
-			<span class="help-block">{{ errors.login | first }}</span>
-		{% endif %}
+	<div class="form-group required">
+		<label for="su_login">Логин</label>
+		<input type="text" name="su_login" id="su_login" placeholder="от 3 до 20 латинских букв или цифр" class="form-control" data-modalfocus required />
 	</div>
-	{#<div class="form-group{{ errors.name ? ' has-error' : '' }}">
-		<label for="name">Отображаемое имя</label>
-		<input type="text" name="name" id="name" class="form-control" />
-		{% if errors.name %}
-			<span class="help-block">{{ errors.name | first }}</span>
-		{% endif %}
-	</div>#}
-	<div class="form-group required{{ errors.email ? ' has-error' : '' }}">
-		<label for="email">E-mail</label>
-		<input type="email" name="email" id="email" placeholder="ваша@поч.та" class="form-control" required />
-		{% if errors.email %}
-			<span class="help-block">{{ errors.email | first }}</span>
-		{% endif %}
+	<div class="form-group required">
+		<label for="su_email">E-mail</label>
+		<input type="email" name="su_email" id="su_email" placeholder="ваша@поч.та" class="form-control" required />
 	</div>
-	<div class="form-group required{{ errors.password ? ' has-error' : '' }}">
-		<label for="password">Пароль</label>
-		<input type="password" name="password" id="password" placeholder="не менее 5 символов" class="form-control" required />
-		{% if errors.password %}
-			<span class="help-block">{{ errors.password | first }}</span>
-		{% endif %}
+	<div class="form-group required">
+		<label for="su_password">Пароль</label>
+		<input type="password" name="su_password" id="su_password" placeholder="не менее 5 символов" class="form-control" required />
 	</div>
-	<div class="form-group required{{ errors.captcha ? ' has-error' : '' }}">
-		<label for="captcha">Напишите цифрами</label>
+	<div class="form-group required">
+		<label for="su_captcha">Напишите цифрами</label>
 		<div class="captcha">
 			<button type="button" class="btn btn-warning btn-xs btn-pad" ng-click="refreshCaptcha()" tabindex="-1">
 				<span class="glyphicon glyphicon-refresh" title="Обновить"></span>
 			</button>
 			{{ '{{captcha}}' }}
 		</div>
-		<input type="text" name="captcha" id="captcha" placeholder="you shall not pass" class="form-control" required autocomplete="off" />
-		{% if errors.captcha %}
-			<span class="help-block">{{ errors.captcha | first }}</span>
-		{% endif %}
+		<input type="text" name="su_captcha" id="su_captcha" placeholder="you shall not pass" class="form-control" required autocomplete="off" />
+	</div>
+	<div class="checkbox">
+		<label><input type="checkbox" name="su_remember" id="su_remember" checked>Запомнить</label>
 	</div>
 	<span class="help-block">Уже зарегистрированы? <a href="javascript:void(0);" ng-click="switchFromTo('{{ modal_name }}', 'signIn')">Войдите</a>.</span>
 {% endblock %}

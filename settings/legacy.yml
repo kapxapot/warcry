@@ -45,11 +45,11 @@ streams:
     - starcraft
     - starcraft ii
     - warcraft iii
-    - warcraft iii: the frozen throne
+    - 'warcraft iii: the frozen throne'
     - diablo iii
-    - diablo iii: reaper of souls
+    - 'diablo iii: reaper of souls'
     - diablo ii
-    - diablo ii: lord of destruction
+    - 'diablo ii: lord of destruction'
 
 comics:
   title: Комиксы
@@ -58,6 +58,9 @@ comics:
 
 news:
   description_limit: 2000
+
+events:
+  title: События
 
 news_limit: 7
 rss_limit: 20

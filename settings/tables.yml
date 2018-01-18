@@ -21,6 +21,7 @@ articles:
     - hideeng
     - announce
     - published
+    - published_at
     - no_breadcrumb
 
 article_categories:
@@ -149,6 +150,44 @@ comic_standalone_pages:
     - updated_by
     - published
     - type
+
+events:
+  table: events
+  api: full
+  name_field: name
+  sort: created_at
+  reverse: true
+  public:
+    - id
+    - name
+    - type_id
+    - starts_at
+    - ends_at
+    - website
+    - region_id
+    - game_id
+    - description
+    - tags
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+  private:
+    - published
+    - published_at
+
+event_types:
+  table: event_types
+  api: full
+  name_field: name
+  sort: name
+  public:
+    - id
+    - name
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
 
 forums:
   table: forumforums
@@ -305,6 +344,20 @@ recipes:
 recipe_sources:
   table: wow_recipe_sources
 
+regions:
+  table: regions
+  api: full
+  name_field: name_ru
+  sort: name_ru
+  public:
+    - id
+    - name_ru
+    - name_en
+    - created_at
+    - created_by
+    - updated_at
+    - updated_by
+
 roles:
   table: warcry_role
   api: list
@@ -361,8 +414,11 @@ stream_types:
     - url
     - title
 
+tags:
+  table: tags
+
 users:
-  table: new_news_users
+  table: users
   api: full
   name_field: login
   sort: created_at

@@ -1,9 +1,14 @@
 {% extends 'main/layout.twig' %}
 
+{% import 'main/macros.twig' as m %}
+
 {% block content %}
 	<div class="panel panel-primary">
 		<div class="panel-heading panel-title">
-		  <span class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ article.name_ru }}{% if not article.hideeng %} <small>({{ article.name_en }})</small>{% endif %}</span>
+			<header class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ article.name_ru }}{% if not article.published_at %} <u>Не опубликована!</u>{% endif %}{% if not article.hideeng %} <small>({{ article.name_en }})</small>{% endif %}</header>
+			<div class="panel-title-buttons">
+				{{ m.edit_button('articles', article.id, article.access.edit) }}
+			</div>
 		</div>
 	  	<div class="panel-body breadcrumbs">
 	  		<ol class="breadcrumb">
@@ -39,7 +44,7 @@
 	    	{% if article.author %}
 	    		<div class="glyphicon-block"><span class="glyphicon glyphicon-user" aria-hidden="true" title="Автор"></span> {% if article.author.member_url %}<a href="{{ article.author.member_url }}">{{ article.author.name }}</a>{% else %}{{ article.author.name }}{% endif %}</div>
 	    	{% endif %}
-	    	<div class="glyphicon-block"><span class="glyphicon glyphicon-time" aria-hidden="true" title="Дата создания"></span> {{ article.created_at }}</div>
+	    	<div class="glyphicon-block"><span class="glyphicon glyphicon-time" aria-hidden="true" title="Дата публикации"></span> {{ article.published_at ?? 'Не опубликована!' }}</div>
 	    	{% if article.editor %}
 	    		<div class="glyphicon-block"><span class="glyphicon glyphicon-pencil" aria-hidden="true" title="Редактор"></span> {% if article.editor.member_url %}<a href="{{ article.editor.member_url }}">{{ article.editor.name }}</a>{% else %}{{ article.editor.name }}{% endif %}</div>
 	    	{% endif %}

@@ -67,7 +67,7 @@ class Comics extends GalleryBase {
 	        ob_start();
 	
 	        if ($format == 'jpeg' ) {
-	            imagejpeg($gdImg);
+	            imagejpeg($gdImg, null, 99);
 	        } elseif ($format == 'png') {
 	            imagepng($gdImg);
 	        } elseif ($format == 'gif') {

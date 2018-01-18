@@ -15,6 +15,8 @@ class Captcha extends Contained {
 	];
 	
 	public function __construct() {
+		parent::__construct($container);
+		
 		$this->numbers = new Numbers;
 	}
 

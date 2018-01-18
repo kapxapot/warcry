@@ -11,39 +11,46 @@ $access = function($entity, $action, $redirect = null) use ($container) {
 
 $settings = $container->get('settings');
 
-/*$app->get('/', function($request, $response, $args) {
-	//return $response->withRedirect($this->router->pathFor('admin.index'));
-})->setName('home');*/
+$base = $settings['folders']['base'];
+$root = strlen($base) == 0;
 
-$app->group('/api/v1', function() use ($settings) {
-	$this->get('/captcha', function($request, $response, $args) use ($settings) {
-		$captcha = $this->captcha->generate($settings['captcha_digits'], true);
-		return $this->db->json($response, [ 'captcha' => $captcha['captcha'] ]);
+$app->group($base, function() use ($root, $settings, $access, $container) {
+	// api
+	
+	$this->group('/api/v1', function() use ($settings) {
+		$this->get('/captcha', function($request, $response, $args) use ($settings) {
+			$captcha = $this->captcha->generate($settings['captcha_digits'], true);
+			return $this->db->json($response, [ 'captcha' => $captcha['captcha'] ]);
+		});
 	});
-});
-
-$app->group('/api/v1', function() use ($settings, $access, $container) {
-	foreach ($settings['tables'] as $alias => $table) {
-		if (isset($table['api'])) {
-			$gen = $container->resolver->resolveEntity($alias);
-			$gen->generateAPIRoutes($this, $access);
+	
+	$this->group('/api/v1', function() use ($settings, $access, $container) {
+		foreach ($settings['tables'] as $alias => $table) {
+			if (isset($table['api'])) {
+				$gen = $container->resolver->resolveEntity($alias);
+				$gen->generateAPIRoutes($this, $access);
+			}
 		}
-	}
-})->add(new TokenAuthMiddleware($container));
+	})->add(new TokenAuthMiddleware($container));
+	
+	// admin
+	
+	$this->get('/admin', function($request, $response, $args) {
+		return $this->view->render($response, 'admin/index.twig');
+	})->setName('admin.index');
+	
+	$this->group('/admin', function() use ($settings, $access, $container) {
+		foreach (array_keys($settings['entities']) as $entity) {
+			$gen = $container->resolver->resolveEntity($entity);
+			$gen->generateAdminPageRoute($this, $access);
+		}
+	})->add(new AuthMiddleware($container, 'admin.index'));
 
-$app->get('/admin', function($request, $response, $args) {
-	return $this->view->render($response, 'admin/index.twig');
-})->setName('admin.index');
-
-$app->group('/admin', function() use ($settings, $access, $container) {
-	foreach (array_keys($settings['entities']) as $entity) {
-		$gen = $container->resolver->resolveEntity($entity);
-		$gen->generateAdminPageRoute($this, $access);
-	}
-})->add(new AuthMiddleware($container, 'admin.index'));
-
-$app->group('/main', function() {
+	// site
+	
 	$this->get('/news/{id:\d+}', \App\Controllers\Main\NewsController::class . ':item')->setName('main.news');
+	$this->get('/news/archive', \App\Controllers\Main\NewsController::class . ':archiveIndex')->setName('main.news.archive');
+	$this->get('/news/archive/{year:\d+}', \App\Controllers\Main\NewsController::class . ':archiveYear')->setName('main.news.archive.year');
 	$this->get('/rss', \App\Controllers\Main\NewsController::class . ':rss')->setName('main.rss');
 	
 	$this->get('/articles/{id}[/{cat}]', \App\Controllers\Main\ArticleController::class . ':item')->setName('main.article');
@@ -67,19 +74,28 @@ $app->group('/main', function() {
 	$this->get('/recipes/{id:\d+}', \App\Controllers\Main\RecipeController::class . ':item')->setName('main.recipe');
 	$this->get('/recipes[/{skill}]', \App\Controllers\Main\RecipeController::class . ':index')->setName('main.recipes');
 
-	$this->get('[/{game}]', \App\Controllers\Main\NewsController::class . ':index')->setName('main.index');
-});
+	$this->get('/events', \App\Controllers\Main\EventController::class . ':index')->setName('main.events');
+	$this->get('/events/{id:\d+}', \App\Controllers\Main\EventController::class . ':item')->setName('main.event');
 
-$app->group('/cron', function() {
-	$this->get('/streams/refresh', \App\Controllers\Main\StreamController::class . ':refresh')->setName('main.cron.streams.refresh');
-});
+	$this->get('/tags/{tag}', \App\Controllers\Main\TagController::class . ':item')->setName('main.tag');
 
-$app->group('/auth', function() {
-	$this->post('/signup', 'AuthController:postSignUp')->setName('auth.signup');
-	$this->post('/signin', 'AuthController:postSignIn')->setName('auth.signin');
-})->add(new GuestMiddleware($container, 'main.index'));
+	$this->get($root ? '/[{game}]' : '[/{game}]', \App\Controllers\Main\NewsController::class . ':index')->setName('main.index');
+
+	// cron
 	
-$app->group('/auth', function() {
-	$this->post('/signout', 'AuthController:postSignOut')->setName('auth.signout');
-	$this->post('/password/change', 'PasswordController:postChangePassword')->setName('auth.password.change');
-})->add(new AuthMiddleware($container, 'main.index'));
+	$this->group('/cron', function() {
+		$this->get('/streams/refresh', \App\Controllers\Main\StreamController::class . ':refresh')->setName('main.cron.streams.refresh');
+	});
+
+	// auth
+	
+	$this->group('/auth', function() {
+		$this->post('/signup', 'AuthController:postSignUp')->setName('auth.signup');
+		$this->post('/signin', 'AuthController:postSignIn')->setName('auth.signin');
+	})->add(new GuestMiddleware($container, 'main.index'));
+		
+	$this->group('/auth', function() {
+		$this->post('/signout', 'AuthController:postSignOut')->setName('auth.signout');
+		$this->post('/password/change', 'PasswordController:postChangePassword')->setName('auth.password.change');
+	})->add(new AuthMiddleware($container, 'main.index'));
+});

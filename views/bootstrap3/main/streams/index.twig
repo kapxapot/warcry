@@ -3,7 +3,7 @@
 {% block content %}
 	<div class="panel panel-primary">
 		<div class="panel-heading panel-title">
-		  <span class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ title }}</span>
+			<header class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ title }}</header>
 		</div>
 	  	<div class="panel-body breadcrumbs">
 	  		<ol class="breadcrumb">
@@ -22,7 +22,7 @@
 				{% for g in groups %}
 					<div role="tabpanel" class="tab-pane fade{% if loop.first %} in active{% endif %}" id="{{ g.id }}">
 						{% if not g.streams %}
-							<p class="nostreams">Стримов нет. :( Но они обязательно будут!</p>
+							<p class="nostreams">Сейчас никто не стримит. :(</p>
 						{% else %}
 							<div class="flex-wrapper streams">
 							{% for s in g.streams %}

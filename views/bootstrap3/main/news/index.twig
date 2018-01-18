@@ -1,5 +1,7 @@
 {% extends 'main/layout.twig' %}
 
+{% import 'main/macros.twig' as m %}
+
 {% set index = true %}
 {% set no_disqus = true %}
 {% set no_social = true %}
@@ -10,14 +12,21 @@
 			{% for news_item in news %}
 				<div class="panel panel-primary">
 					<div class="panel-heading panel-title">
-					  <a class="icon-{{ news_item.game.alias }}" href="{{ path_for('main.news', { 'id': news_item.id }) }}" title="[{{ news_item.game.name }}] {{ news_item.title }}">{{ news_item.title }}</a>
+						<header class="icon-{{ news_item.game.alias }}">
+							<a href="{{ path_for('main.news', { 'id': news_item.id }) }}" title="[{{ news_item.game.name }}] {{ news_item.title }}">{{ news_item.title }}</a>
+						</header>
+						<div class="panel-title-buttons">
+							{{ m.edit_button('news', news_item.id, news_item.access.edit) }}
+						</div>
 					</div>
 				    {% include 'main/news/bodyfooter.twig' %}
 				</div>
 			{% endfor %}
 		{% else %}
-			<div>По заданным параметрам новостей не найдено. Возможно, эта ссылка сформированна неверно или устарела.</div>
+			<div>По заданным параметрам новости не найдены.</div>
 		{% endif %}
-		{#<div class="all-news"><a href="{{ news_index }}">Все новости &raquo;&raquo;</a></div>#}
+		<div class="all-news">
+			<a class="btn btn-lg btn-default btn-block" href="{{ path_for('main.news.archive') }}" role="button">Архив новостей &raquo;&raquo;</a>
+		</div>
 	</div>
 {% endblock %}

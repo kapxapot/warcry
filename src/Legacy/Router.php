@@ -22,7 +22,7 @@ class Router extends Contained {
 		return $this->getSettings('legacy.forum.page') . '?' . $url;
 	}
 	
-	private function absoluteUrl($url) {
+	public function abs($url) {
 		if (substr($url, 0, 1) !== '/') {
 			$url = '/' . $url;
 		}
@@ -40,17 +40,28 @@ class Router extends Contained {
 
 		return $this->router->pathFor('main.article', $params);
 	}
-	
+
 	public function news($id) {
 		return $this->router->pathFor('main.news', [ 'id' => $id ]);
 	}
-	
-	public function newsAbs($id) {
-		return $this->absoluteUrl($this->news($id));
+
+	public function event($id) {
+		return $this->router->pathFor('main.event', [ 'id' => $id ]);
 	}
-	
+
+	public function tag($tag, $tab = null) {
+		$tag = $this->articleParser->fromSpaces($tag, '+');
+		$url = $this->router->pathFor('main.tag', [ 'tag' => $tag ]);
+		
+		if ($tab) {
+			$url .= '#/' . $tab;
+		}
+		
+		return $url;
+	}
+
 	public function n($id) {
-		return $this->absoluteUrl('n/' . $id);
+		return $this->abs('n/' . $id);
 	}
 
 	public function game($game) {
@@ -65,7 +76,7 @@ class Router extends Contained {
 	
 	// disqus
 	public function disqusNews($id) {
-		return $this->newsAbs($id);
+		return $this->abs($this->news($id));
 	}
 	
 	public function disqusArticle($article) {
@@ -75,19 +86,19 @@ class Router extends Contained {
 			$cat = $article['cat']['name_en'];
 		}
 
-		return $this->absoluteUrl($this->article($id, $cat));
+		return $this->abs($this->article($id, $cat));
 	}
 	
 	public function disqusGalleryAuthor($author) {
-		return $this->absoluteUrl($this->galleryAuthor($author));
+		return $this->abs($this->galleryAuthor($author));
 	}
 
 	public function disqusRecipes($skill) {
-		return $this->absoluteUrl($this->recipes($skill));
+		return $this->abs($this->recipes($skill));
 	}
 
 	public function disqusRecipe($id) {
-		return $this->absoluteUrl($this->recipe($id));
+		return $this->abs($this->recipe($id));
 	}
 
 	// forum
@@ -234,5 +245,18 @@ class Router extends Contained {
 	
 	public function wowheadItemRuXml($id) {
 		return $this->wowheadItemRu($id) . '&xml';
+	}
+	
+	// twitch
+	public function twitchImg($id) {
+		return "//static-cdn.jtvnw.net/previews-ttv/live_user_{$id}-320x180.jpg";
+	}
+	
+	public function twitchLargeImg($id) {
+		return "//static-cdn.jtvnw.net/previews-ttv/live_user_{$id}-640x360.jpg";
+	}
+	
+	public function twitch($id) {
+		return 'http://twitch.tv/' . $id;
 	}
 }
