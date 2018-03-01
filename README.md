@@ -1,7 +1,7 @@
 # Warcry.ru
 
-The **SITE** and the admin panel for Warcry.ru.
+[Old] The **SITE** and the admin panel for Warcry.ru.
 
 Uses PHP, Twig, Bootstrap, AngularJS, Datatables.
 
-http://warcry.ru
+Warcry.ru moved to Plasticode.
