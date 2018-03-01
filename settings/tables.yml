@@ -26,7 +26,7 @@ articles:
 
 article_categories:
   table: enc_cat
-  api: list
+  api: full
   name_field: name_ru
   sort: name_ru
   public:
@@ -175,6 +175,7 @@ events:
   private:
     - published
     - published_at
+    - announce
 
 event_types:
   table: event_types
@@ -184,6 +185,7 @@ event_types:
   public:
     - id
     - name
+    - plural
     - created_at
     - created_by
     - updated_at
@@ -357,6 +359,8 @@ regions:
     - created_by
     - updated_at
     - updated_by
+    - parent_id
+    - terminal
 
 roles:
   table: warcry_role

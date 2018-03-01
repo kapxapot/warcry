@@ -3,7 +3,7 @@
 namespace App\Generators;
 
 use Warcry\Contained;
-use Warcry\Util\Util;
+use Warcry\Util\Strings;
 
 class Resolver extends Contained {
 	private function buildClassName($name) {
@@ -11,7 +11,7 @@ class Resolver extends Contained {
 	}
 	
 	public function resolveEntity($entity) {
-		$pascalEntity = Util::toPascalCase($entity);
+		$pascalEntity = Strings::toPascalCase($entity);
 		$generatorClass = $this->buildClassName('Entities\\' . $pascalEntity);
 		
 		if (!class_exists($generatorClass)) {

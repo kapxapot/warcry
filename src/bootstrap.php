@@ -40,6 +40,8 @@ require $src . 'routes.php';
 // temp
 $lib = __DIR__ . $container->get('settings')['folders']['lib'];
 
+// потому что все в одном файле и надо конкретно переписывать все, чтобы нормально было по классам
+// возможно, лучше использовать другую, более современную библиотеку
 require $lib . 'feed-creator.php';
 
 $app->run();

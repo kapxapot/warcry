@@ -4,7 +4,7 @@ namespace App\Controllers\Auth;
 
 use Respect\Validation\Validator as v;
 
-use Warcry\Util\Util;
+use Warcry\Util\Security;
 use Warcry\Slim\Controllers\Controller;
 use Warcry\Exceptions\ValidationException;
 
@@ -24,7 +24,7 @@ class PasswordController extends Controller {
 		
 		$password = $request->getParam('password');
 		
-		$user->set('password', Util::encodePassword($password));
+		$user->set('password', Security::encodePassword($password));
 		$user->save();
 		
 		$this->logger->info("Changed password for user: {$this->auth->userString()}");

@@ -13,7 +13,7 @@
 			</ol>
 		</div>
 		{% if parts|length > 0 %}
-			<div class="panel-body">
+			<div class="panel-body body-nopad">
 				<ul class="nav nav-tabs" role="tablist">
 			  		{% for part in parts %}
 						<li role="presentation"{% if loop.first %} class="active"{% endif %}><a href="#{{ part.id }}" aria-controls="{{ part.label }}" role="tab" data-toggle="tab" title="{{ part.label }}">{{ part.label }}</a></li>
@@ -25,8 +25,12 @@
 						<div role="tabpanel" class="tab-pane fade{% if loop.first %} in active{% endif %} linkblock-big" id="{{ part.id }}">
 							{% for v in part.values %}
 								<div class="icon-{{ v.game.alias }}">
-									<a title="[{{ v.game.name }}] {{ v.title|raw }}" href="{{ v.url }}">{{ v.title|raw }}</a>
-									<span class="nowrap">[{{ v.start_date }}{% if v.end_date %} — {{ v.end_date }}{% endif %}]</span>
+									<div>
+										<a title="[{{ v.game.name }}] {{ v.title|raw }}" href="{{ v.url }}">{{ v.title|raw }}</a>
+									</div>
+									<div>
+										{{ v.subtitle|raw }}
+									</div>
 								</div>
 							{% endfor %}
 						</div>

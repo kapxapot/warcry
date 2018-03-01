@@ -12,6 +12,15 @@ class ComicIssues extends EntityGenerator {
 		];
 	}
 	
+	public function afterLoad($item) {
+		$series = $this->db->getComicSeries($item['series_id']);
+		if ($series) {
+			$item['series_alias'] = $series['alias'];
+		}
+
+		return $item;
+	}
+	
 	public function getAdminParams($args) {
 		$params = parent::getAdminParams($args);
 		

@@ -9,24 +9,15 @@ articles:
       name: id
       attributes: [ readonly ]
 
-    parent_id:
-      name: Родительская статья
-      entity: articles
-      access: publish
-      dropdown_template: '[{{%item%.id}}] {{%name%}}'
-      attributes: [ nullable, hidden ]
-
-    cat:
-      name: Категория
-      entity: article_categories
-      access: publish
-      attributes: [ nullable, hidden ]
+    game_id:
+      name: Игра
+      entity: games
+      default: 1
 
     name_ru:
       name: Заголовок
       template: >
-        '<a href="/articles/' + row.name_en + '" target="_blank">' + row.name_ru + ' (' + row.name_en + ')</a>'
-#(row.published == 1) ? '<a href="/articles/' + row.name_en + '" target="_blank">' + row.name_ru + ' (' + row.name_en + ')</a>' : row.name_ru + ' (' + row.name_en + ')'
+        '<a href="/articles/' + row.name_en_esc + (row.cat ? '/' + row.cat_en_esc : '') + '">' + row.name_ru + (row.cat ? ' / ' + row.cat_ru : '') + ' (' + row.name_en + ')</a>'
 
     name_en:
       name: Eng. Title
@@ -46,11 +37,20 @@ articles:
       name: Текст
       type: html
       attributes: [ nullable, hidden ]
+      tooltip: '<a href="/articles/Markup_Guide" target="_blank">Руководство по оформлению текстов</a> (откроется в новом окне)'
 
-    game_id:
-      name: Игра
-      entity: games
-      default: 1
+    parent_id:
+      name: Родительская статья
+      entity: articles
+      access: publish
+      dropdown_template: '[{{%item%.id}}] {{%name%}}'
+      attributes: [ nullable, hidden ]
+
+    cat:
+      name: Категория
+      entity: article_categories
+      access: publish
+      attributes: [ nullable, hidden ]
 
     origin:
       name: Источник
@@ -93,6 +93,26 @@ articles:
       attributes: [ readonly ]
 
 
+article_categories:
+
+  name_gen: категории статей
+  name_accus: категорию статей
+  title: Категории статей
+
+  columns:
+    id:
+      name: id
+      attributes: [ readonly ]
+
+    name_ru:
+      name: Название
+
+    name_en:
+      name: Eng. Title
+      form_name: Английское название
+      tooltip: 'Это название включается в адреса статей.'
+
+
 comic_issues:
 
   name_gen: комикса
@@ -109,10 +129,14 @@ comic_issues:
     number:
       name: Номер
       type: number
+      template: >
+        '<a href="/comics/series/' + row.series_alias + '/' + row.number + '">' + row.number + '</a>'
 
     name_ru:
       name: Название
       attributes: [ nullable ]
+      template: >
+        row.name_ru ? '<a href="/comics/series/' + row.series_alias + '/' + row.number + '">' + row.name_ru + '</a>' : ''
 
     name_en:
       name: Eng. Title
@@ -170,7 +194,7 @@ comic_pages:
     pic:
       name: Картинка
       template: >
-        '<a href="' + row.picture + '" target="_blank"><img src="' + row.thumb + '" height="120"></a>'
+        '<a href="' + row.picture + '"><img src="' + row.thumb + '" height="120"></a>'
       attributes: [ no_sort, readonly ]
 
     number:
@@ -248,6 +272,8 @@ comic_series:
 
     name_ru:
       name: Название
+      template: >
+        '<a href="/comics/series/' + row.alias + '">' + row.name_ru + '</a>'
 
     name_en:
       name: Eng. Title
@@ -305,6 +331,8 @@ comic_standalones:
 
     name_ru:
       name: Название
+      template: >
+        '<a href="/comics/' + row.alias + '">' + row.name_ru + '</a>'
 
     name_en:
       name: Eng. Title
@@ -376,7 +404,7 @@ comic_standalone_pages:
     pic:
       name: Картинка
       template: >
-        '<a href="' + row.picture + '" target="_blank"><img src="' + row.thumb + '" height="120"></a>'
+        '<a href="' + row.picture + '"><img src="' + row.thumb + '" height="120"></a>'
       attributes: [ no_sort, readonly ]
 
     number:
@@ -419,7 +447,7 @@ events:
     name:
       name: Название
       template: >
-        '<a href="/events/' + row.id + '" target="_blank">' + row.name + '</a>'
+        '<a href="/events/' + row.id + '">' + row.name + '</a>'
 
     type_id:
       name: Тип
@@ -435,6 +463,7 @@ events:
       name: Конец
       type: datetime-local
       attributes: [ nullable, hidden ]
+      tooltip: Оставьте пустым, если дата совпадает с началом.
 
     website:
       name: Веб-сайт
@@ -444,22 +473,28 @@ events:
     region_id:
       name: Регион
       entity: regions
-      attributes: [ hidden ]
+      attributes: [ nullable, hidden ]
 
     game_id:
       name: Игра
       entity: games
-      attributes: [ nullable, hidden ]
+      attributes: [ nullable ]
 
     description:
       name: Описание
       type: html
       attributes: [ nullable, hidden ]
+      tooltip: '<a href="/articles/Markup_Guide" target="_blank">Руководство по оформлению текстов</a> (откроется в новом окне)'
 
     tags:
       name: Теги
       attributes: [ nullable, hidden ]
       tooltip: Через запятую.
+
+    announce:
+      name: Анонс
+      type: bool
+      access: publish
 
     published:
       name: Опубликовано
@@ -491,6 +526,11 @@ event_types:
     name:
       name: Название
 
+    plural:
+      name: Множественное число
+      attributes: [ nullable, hidden ]
+      tooltip: Укажите, если отличается от единственного числа.
+
     created_by_name:
       name: Автор
       attributes: [ readonly ]
@@ -517,7 +557,7 @@ gallery_authors:
     name:
       name: Имя
       template: >
-        '<a href="/gallery/' + row.alias + '" target="_blank">' + row.name + '</a>'
+        '<a href="/gallery/' + row.alias + '">' + row.name + '</a>'
 
     alias:
       name: Алиас
@@ -528,7 +568,7 @@ gallery_authors:
     deviant:
       name: Deviant
       template: >
-        '<a href="//' + row.deviant + '.deviantart.com" target="_blank">' + row.deviant + '</a>'
+        '<a href="//' + row.deviant + '.deviantart.com">' + row.deviant + '</a>'
       attributes: [ nullable, hidden ]
 
     real_name:
@@ -582,12 +622,12 @@ gallery_pictures:
     pic:
       name: Картинка
       template: >
-        '<a href="' + row.picture + '" target="_blank"><img src="' + row.thumb + '" width="50"></a>'
+        '<a href="' + row.picture + '"><img src="' + row.thumb + '" width="50"></a>'
       attributes: [ no_sort, readonly ]
 
     comment:
       template: >
-        (row.published == 1) ? '<a href="/gallery/' + row.author_id + '/' + row.id + '" target="_blank">' + row.comment + '</a>' : row.comment
+        (row.published == 1) ? '<a href="/gallery/' + row.author_id + '/' + row.id + '">' + row.comment + '</a>' : row.comment
       name: Заголовок
 
     picture:
@@ -688,7 +728,7 @@ menus:
       name: Ссылка
       type: site_url
       template: >
-        '<a href="' + row.link + '" target="_blank">' + row.text + '</a>'
+        '<a href="' + row.link + '">' + row.text + '</a>'
 
     text:
       name: Текст
@@ -726,7 +766,7 @@ menu_items:
       name: Ссылка
       type: site_url
       template: >
-        '<a href="' + row.link + '" target="_blank">' + row.text + '</a>'
+        '<a href="' + row.link + '">' + row.text + '</a>'
 
     text:
       name: Текст
@@ -757,12 +797,13 @@ news:
     title:
       name: Заголовок
       template: >
-        '<a href="/news/' + row.id + '" target="_blank">' + row.title + '</a>'
+        '<a href="/news/' + row.id + '">' + row.title + '</a>'
 
     text:
       name: Текст
       type: html
       attributes: [ hidden ]
+      tooltip: '<a href="/articles/Markup_Guide" target="_blank">Руководство по оформлению текстов</a> (откроется в новом окне)'
 
     game_id:
       name: Игра
@@ -818,6 +859,19 @@ regions:
       attributes: [ nullable ]
       tooltip: Укажите для зарубежного региона.
 
+    parent_id:
+      name: Род. регион
+      form_name: Родительский регион
+      entity: regions
+      dropdown_template: '[{{%item%.id}}] {{%name%}}'
+      attributes: [ nullable ]
+
+    terminal:
+      name: Терминальный
+      type: bool
+      attributes: [ hidden ]
+      tooltip: Поставьте эту галку, если в названии этого региона не нужно выводить название его родителя.
+
     created_by_name:
       name: Автор
       attributes: [ readonly ]
@@ -842,7 +896,7 @@ streams:
     title:
       name: Название
       template: >
-        ((row.published == 1) ? '<a href="/streams/' + (row.stream_alias ? row.stream_alias : row.stream_id) + '" target="_blank">' + row.title + '</a>' : row.title) + ((row.channel == 1) ? ' (канал)' : '')
+        ((row.published == 1) ? '<a href="/streams/' + (row.stream_alias ? row.stream_alias : row.stream_id) + '">' + row.title + '</a>' : row.title) + ((row.channel == 1) ? ' (канал)' : '')
 
     #type:
     #  name: Тип

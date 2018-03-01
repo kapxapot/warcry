@@ -14,8 +14,15 @@
 					</div>
               	</div>
 		      	<div class="modal-footer">
-		        	<button type="button" class="btn btn-default" ng-disabled="loading" data-dismiss="modal">Отмена</button>
-		        	<button type="submit" class="btn btn-primary" ng-disabled="loading">{{ modal_save_label ?? 'Сохранить' }}</button>
+		      		<div>
+			        	<button type="button" class="btn btn-default" ng-disabled="loading" data-dismiss="modal">Отмена</button>
+			        	<button type="submit" class="btn btn-primary" ng-disabled="loading">{{ modal_save_label ?? 'Сохранить' }}</button>
+		      		</div>
+			      	{% if modal_persist %}
+						<div class="checkbox">
+							<label><input type="checkbox" name="persist" id="persist">Не закрывать окно</label>
+						</div>
+			      	{% endif  %}
 		      	</div>
 			</form>
 	    </div>

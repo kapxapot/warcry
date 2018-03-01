@@ -67,10 +67,10 @@ rights:
     template: editor_strict
 
   events:
-    template: editor_strict
+    template: public
 
   event_types:
-    template: editor_strict
+    template: editor
     
   games:
     template: admin_api

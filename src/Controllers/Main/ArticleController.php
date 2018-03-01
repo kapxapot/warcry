@@ -12,7 +12,7 @@ class ArticleController extends BaseController {
 		$rebuild = $request->getQueryParam('rebuild', false);
 
 		$article = new Article($this->container, $id, $cat, $rebuild);
-		
+
 		if (!$article->data) {
 			return $this->notFound($request, $response);
 		}
@@ -23,7 +23,7 @@ class ArticleController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $article['game'],
-			'sidebar' => [ 'stream', 'create.articles', 'articles' ],
+			'sidebar' => [ 'stream', 'create.articles', 'events', 'articles' ],
 			'article_id' => $id,
 			'params' => [
 				'disqus_url' => $this->legacyRouter->disqusArticle($article),
@@ -35,5 +35,37 @@ class ArticleController extends BaseController {
 		]);
 
 		return $this->view->render($response, 'main/articles/item.twig', $params);
+	}
+	
+	protected function getArticle($args) {
+		$id = $args['id'];
+		$cat = $args['cat'];
+
+		$id = $this->legacyArticleParser->toSpaces($id);
+		$cat = $this->legacyArticleParser->toSpaces($cat);
+
+		return $this->db->getArticle($id, $cat);
+	}
+
+	/*public function convert($request, $response, $args) {
+		$article = $this->getArticle($args);
+
+		if (!$article) {
+			return $this->notFound($request, $response);
+		}
+
+		$text = $article['text'];
+		
+		return $this->legacyArticleParser->convertArticleFromXml($text);
+	}*/
+
+	public function source($request, $response, $args) {
+		$article = $this->getArticle($args);
+
+		if (!$article) {
+			return $this->notFound($request, $response);
+		}
+
+		return $article['text'];
 	}
 }

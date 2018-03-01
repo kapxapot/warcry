@@ -14,16 +14,35 @@ class NewsController extends BaseController {
 			}
 		}
 
-		$offset = $request->getQueryParam('offset', 0);
-		$limit = $request->getQueryParam('limit', $this->getSettings('legacy.news_limit'));
+		$page = $request->getQueryParam('page', 1);
+		$pageSize = $this->getSettings('legacy.news_limit');
 
-		$news = $this->builder->buildAllNews($filterByGame, $offset, $limit);
+		$news = $this->builder->buildAllNews($filterByGame, $page, $pageSize);
+		
+		// paging
+		$count = $this->db->getAllNewsCount($filterByGame);
+		$url = $this->legacyRouter->game($filterByGame);
+		
+		$paging = $this->builder->buildComplexPaging($url, $count, $page, $pageSize);
+
+		if ($paging) {
+			if (isset($paging['prev'])) {
+				$relPrev = $paging['prev']['url'];
+			}
+			
+			if (isset($paging['next'])) {
+				$relNext = $paging['next']['url'];
+			}
+		}
 
 		$params = $this->buildParams([
 			'game' => $filterByGame,
-			'sidebar' => [ 'stream', 'create.news', 'forum', 'articles' ],
+			'sidebar' => [ 'stream', 'create.news', 'events', 'articles' ],
 			'params' => [
 				'news' => $news,
+				'paging' => $paging,
+				'rel_prev' => $relPrev,
+				'rel_next' => $relNext,
 			],
 		]);
 		
@@ -47,7 +66,7 @@ class NewsController extends BaseController {
 
 		$params = $this->buildParams([
 			'game' => $news['game'],
-			'sidebar' => [ 'stream', 'news', 'create.news', 'forum' ],
+			'sidebar' => [ 'stream', 'news', 'create.news', 'events' ],
 			'news_id' => $id,
 			'params' => [
 				'disqus_url' => $this->legacyRouter->disqusNews($id),
@@ -78,10 +97,6 @@ class NewsController extends BaseController {
 	public function archiveYear($request, $response, $args) {
 		$year = $args['year'];
 
-		if (strlen($year) > 0 && !is_numeric($year)) {
-			return $this->notFound($request, $response);
-		}
-
 		$monthly = $this->builder->buildNewsArchive($year);
 		
 		$params = $this->buildParams([
@@ -97,11 +112,9 @@ class NewsController extends BaseController {
 	}
 	
 	public function rss($request, $response, $args) {
-		$game = null;
-		$offset = 0;
 		$limit = $this->getSettings('legacy.rss_limit');
 		
-		$news = $this->builder->buildAllNews($filterByGame, $offset, $limit);
+		$news = $this->builder->buildAllNews(null, 1, $limit);
 
 		$fileName = __DIR__ . $this->getSettings('folders.rss_cache') . 'rss.xml';
 
@@ -126,7 +139,7 @@ class NewsController extends BaseController {
 		
 		$image = new \FeedImage();
 		$image->title = $siteName . " logo";
-		$image->url = $siteUrl . '/images/text_logo_4.png';
+		$image->url = $siteUrl . $settings['logo'];
 		$image->link = $siteUrl;
 		$image->description = $siteDescription;
 		$rss->image = $image;

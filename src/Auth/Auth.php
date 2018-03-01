@@ -2,8 +2,9 @@
 
 namespace App\Auth;
 
-use Warcry\Util\Util;
 use Warcry\Contained;
+use Warcry\Util\Date;
+use Warcry\Util\Security;
 use Warcry\Exceptions\AuthenticationException;
 
 use App\DB\Tables;
@@ -113,15 +114,15 @@ class Auth extends Contained {
 		$ok = false;
 
 		if ($user) {
-			if (Util::verifyPassword($password, $user->password)) {
-				if (Util::rehashPasswordNeeded($user->password)) {
-					$user->password = Util::encodePassword($password);
+			if (Security::verifyPassword($password, $user->password)) {
+				if (Security::rehashPasswordNeeded($user->password)) {
+					$user->password = Security::encodePassword($password);
 					$user->save();
 				}
 				
 				$token = $this->db->forTable(Tables::AUTH_TOKENS)->create();
 				$token->user_id = $user->id;
-				$token->token = Util::generateToken();
+				$token->token = Security::generateToken();
 				$token->expires_at = $this->generateExpirationTime();
 				
 				$token->save();
@@ -142,7 +143,7 @@ class Auth extends Contained {
 	
 	private function generateExpirationTime() {
 		$ttl = $this->getSettings('token_ttl');
-		return Util::generateExpirationTime($ttl * 60);
+		return Date::generateExpirationTime($ttl * 60);
 	}
 	
 	public function validateCookie($tokenStr) {

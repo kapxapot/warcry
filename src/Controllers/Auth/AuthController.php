@@ -4,7 +4,7 @@ namespace App\Controllers\Auth;
 
 use Respect\Validation\Validator as v;
 
-use Warcry\Util\Util;
+use Warcry\Util\Security;
 use Warcry\Slim\Controllers\Controller;
 use Warcry\Exceptions\NotFoundException;
 use Warcry\Exceptions\ValidationException;
@@ -38,7 +38,7 @@ class AuthController extends Controller {
 		$user->set($data);
 		
 		$password = $user->password;
-		$user->password = Util::encodePassword($password);
+		$user->password = Security::encodePassword($password);
 
 		$user->save();
 

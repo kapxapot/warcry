@@ -6,7 +6,9 @@
 	<div class="panel panel-primary">
 		<div class="panel-heading panel-title">
 			<header class="icon-{{ game.alias }}" title="[{{ game.name }}] {{ title }}">{{ title }}</header>
-			{{ m.edit_button('events', event.id, event.access.edit) }}
+			<div class="panel-title-buttons">
+				{{ m.edit_button('events', event.id, event.access.edit) }}
+			</div>
 		</div>
 	  	<div class="panel-body breadcrumbs">
 	  		<ol class="breadcrumb">
@@ -17,12 +19,17 @@
 			</ol>
 		</div>
 	  	<div class="panel-body">
-	 		<p><b>Дата начала:</b> {{ event.starts_at }}</p>
+	 		<p><b>Начало:</b> {{ event.start_ui|raw }}</p>
 			{% if event.ends_at %}
-	  			<p><b>Дата конца:</b> {{ event.ends_at }}</p>
+	  			<p><b>Конец:</b> {{ event.end_ui|raw }}</p>
 			{% endif %}
-			<p><b>Тип мероприятия:</b> {{ event.type.name }}</p>
-			<p><b>Место проведения:</b> {{ event.region.title }}</p>
+			<p><b>Тип:</b> {{ event.type.name }}</p>
+			{% if event.region %}
+				<p><b>Место проведения:</b> {{ event.region.title }}</p>
+			{% endif %}
+			{% if event.website %}
+	  			<p><a href="{{ event.website }}">{{ event.website }}</a></p>
+			{% endif %}
 			{% if event.description %}
 	  			<p>{{ event.description|raw }}</p>
 			{% endif %}

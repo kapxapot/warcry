@@ -39,8 +39,16 @@ class RecipeController extends BaseController {
 			];
 		}
 
-		$paging = $this->builder->buildRecipesPaging($page, $skill, $query, $pageSize);
-	
+		// paging
+		$count = $this->db->getRecipeCount($skill['id'], $query);
+		$url = $this->legacyRouter->recipes($skill);
+
+		if ($query) {
+			$url .= '?q=' . htmlspecialchars($query);
+		}
+		
+		$paging = $this->builder->buildComplexPaging($url, $count, $page, $pageSize);
+
 		if ($paging) {
 			if (isset($paging['prev'])) {
 				$relPrev = $paging['prev']['url'];

@@ -12,7 +12,7 @@ class Articles extends PublishableGenerator {
 
 		if (array_key_exists('name_en', $data) && array_key_exists('cat', $data)) {
 			$rules['name_en'] = $this->rule('text')
-				->regex($this->rules->lat("':\-"))
+				//->regex($this->rules->lat("':\-"))
 				->articleNameCatAvailable($data['cat'], $id);
 		}
 		
@@ -26,9 +26,26 @@ class Articles extends PublishableGenerator {
 		];
 	}
 	
+	public function afterLoad($item) {
+		$item['name_en_esc'] = $this->legacyArticleParser->fromSpaces($item['name_en']);
+		
+		if ($item['cat'] > 0) {
+			$cat = $this->db->getCat($item['cat']);
+			if ($cat) {
+				$item['cat_ru'] = $cat['name_ru'];
+				$item['cat_en'] = $cat['name_en'];
+				$item['cat_en_esc'] = $this->legacyArticleParser->fromSpaces($cat['name_en']);
+			}
+		}
+
+		return $item;
+	}
+	
 	public function beforeSave($data, $id = null) {
 		$data['cache'] = null;
 		$data['contents_cache'] = null;
+		
+		$data['name_en'] = $data['name_en'] ?? $data['name_ru'];
 		
 		$data = $this->publishIfNeeded($data);		
 		

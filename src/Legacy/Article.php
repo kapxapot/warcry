@@ -39,13 +39,15 @@ class Article extends Contained {
 				$this->contents = json_decode($this->data['contents_cache']);
 			}
 			elseif (strlen($text) > 0) {
-				$result = (preg_match("/\s*\<article\>/", $text))
+				/*$result = (preg_match("/\s*\<article\>/", $text))
 					? $this->parser->parseXML($text)
-					: $this->parser->parseBB($text);
+					: $this->parser->parseBB($text);*/
+
+				$result = $this->parser->parse($text);
 
 				$this->text = $result['text'];
 				$this->contents = $this->buildContents($result['contents']);
-				
+
 				$this->db->saveArticleCache($this->id, $this->text);
 				$this->db->saveArticleContentsCache($this->id, json_encode($this->contents));
 			}

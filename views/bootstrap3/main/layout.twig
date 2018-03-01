@@ -108,7 +108,7 @@
 						</div>
 					{% endif %}
 		
-					<div id="ad-bottom" class="hidden-xs">
+					<div id="ad-bottom" class="hidden-md">
 						{% include 'main/includes/banners/bottom728x90.twig' %}
 					</div>
 		        </div>
@@ -123,7 +123,7 @@
 
 					{% include 'main/includes/sidebar.twig' %}
 
-					<div id="ad-sidebar"{% if one_column %} class="visible-xs"{% endif %}>
+					<div id="ad-sidebar">
 						{% include 'main/includes/banners/sidebar240x400.twig' %}
 					</div>
 
@@ -179,7 +179,7 @@
 					<a href="https://plus.google.com/u/0/b/118030010104701570479/118030010104701570479/posts" title="Наша страница в Google+"><img src="/images/sharelarge/googleplus.png" alt="" /></a>
 				</div>
 				
-				<div>Все права защищены. &copy; 2004—{{ year }} <a href="mailto:{{ team_mail }}">{{ site_name }}</a></div>
+				<div>Все права защищены. &copy; 2004—{{ year }} <a href="mailto:{{ contact_email }}">{{ site_name }}</a></div>
 				<div>При копировании материалов ссылка на источник обязательна.</div>
 				<div id="disclaimer">Все товарные знаки являются собственностью соответствующих владельцев. &copy; Blizzard Entertainment, {{ year }} г. Все права защищены.</div>
 			</div>
@@ -190,7 +190,10 @@
 		<script src="{{ folders.lib }}colorbox/jquery.colorbox.js"></script>
 
 		<!-- Wowhead etc. -->  
-		<script async src="//www.wowhead.com/widgets/power.js"></script>
+		{#<script async src="//www.wowhead.com/widgets/power.js"></script>#}
+		<script>var whTooltips = {colorLinks: false, iconizeLinks: {{ iconize_links ?? true }}, renameLinks: false};</script>
+		<script async src="//wow.zamimg.com/widgets/power.js"></script>
+		{#<script async src="//hearthhead.com/dist/hh-ttps.js"></script>#}
 		<script async src="//eu.battle.net/d3/static/js/tooltips.js"></script>
 
 		{# local js #}		

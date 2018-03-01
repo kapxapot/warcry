@@ -41,15 +41,15 @@ class Router extends Contained {
 		return $this->router->pathFor('main.article', $params);
 	}
 
-	public function news($id) {
+	public function news($id = null) {
 		return $this->router->pathFor('main.news', [ 'id' => $id ]);
 	}
 
-	public function event($id) {
+	public function event($id = null) {
 		return $this->router->pathFor('main.event', [ 'id' => $id ]);
 	}
 
-	public function tag($tag, $tab = null) {
+	public function tag($tag = null, $tab = null) {
 		$tag = $this->articleParser->fromSpaces($tag, '+');
 		$url = $this->router->pathFor('main.tag', [ 'tag' => $tag ]);
 		
@@ -150,7 +150,7 @@ class Router extends Contained {
 	}
 	
 	// streams
-	public function stream($alias) {
+	public function stream($alias = null) {
 		return $this->router->pathFor('main.stream', [ 'alias' => $alias ]);
 	}
 	

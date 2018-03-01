@@ -3,7 +3,7 @@
 namespace App\DB;
 
 use Warcry\Util\Date;
-use Warcry\Util\Util;
+use Warcry\Util\Security;
 use Warcry\ORM\Idiorm\DbHelper as DbHelperBase;
 
 use App\DB\Tables;
@@ -94,7 +94,7 @@ class DbLayer extends DbHelperBase {
 		if (array_key_exists('password', $data)) {
 			$password = $data['password'];
 			if (strlen($password) > 0) {
-				$data['password'] = Util::encodePassword($password);
+				$data['password'] = Security::encodePassword($password);
 			}
 			else {
 				unset($data['password']);
@@ -103,7 +103,7 @@ class DbLayer extends DbHelperBase {
 
 		// dirty
 		/*if ($this->hasField($table, 'created_at') && !$id) {
-			$data['created_at'] = Util::now();
+			$data['created_at'] = Date::now();
 		}*/
 
 		$upd = $this->updatedAt($table);
@@ -125,7 +125,7 @@ class DbLayer extends DbHelperBase {
 	
 	private function updatedAt($table) {
 		return $this->hasField($table, 'updated_at')
-			? Util::now()
+			? Date::now()
 			: null;
 	}
 
@@ -331,6 +331,7 @@ class DbLayer extends DbHelperBase {
 		return $this->getIdByName(Tables::ITEMS, $name);
 	}
 
+	// to kill
 	public function getNPCId($name) {
 		return $this->getIdByName(Tables::NPC, $name);
 	}
@@ -343,10 +344,12 @@ class DbLayer extends DbHelperBase {
 		});
 	}
 
+	// to kill
 	public function getQuestId($name) {
 		return $this->getIdByName(Tables::QUESTS, $name);
 	}
 
+	// to kill (let it live, for now)
 	public function getLocationId($name) {
 		return $this->getIdByName(Tables::LOCATIONS, $name);
 	}
@@ -555,6 +558,12 @@ class DbLayer extends DbHelperBase {
 
 		return $this->topicsWithPosts($topics);
 	}
+	
+	public function getForumNewsCount($filterByGame = null, $exceptNewsId = null, $year = null) {
+		$news = $this->getLatestForumNews($filterByGame, 0, 0, $exceptNewsId, $year);
+		
+		return count($news);
+	}
 
 	public function getForumNewsByYear($year) {
 		return $this->getLatestForumNews(null, 0, 0, null, $year);
@@ -606,6 +615,16 @@ class DbLayer extends DbHelperBase {
 		}
 
 		return $this->addRightsMany(Tables::NEWS, $this->getArray($query));
+	}
+	
+	public function getNewsCount($filterByGame = null, $exceptNewsId = null, $year = null) {
+		$news = $this->getLatestNews($filterByGame, 0, 0, $exceptNewsId, $year);
+		
+		return count($news);
+	}
+	
+	public function getAllNewsCount($filterByGame) {
+		return $this->getNewsCount($filterByGame) + $this->getForumNewsCount($filterByGame);
 	}
 
 	public function getNewsByYear($year) {
@@ -685,7 +704,7 @@ class DbLayer extends DbHelperBase {
 		return $this->topicsWithPosts($topics);
 	}
 	
-	protected function getByTag($table, $taggable, $tag) {
+	protected function getByTag($table, $taggable, $tag, $where = null) {
 		$ids = $this->getIdsByTag($taggable, $tag);
 		
 		if (!$ids) {
@@ -696,8 +715,14 @@ class DbLayer extends DbHelperBase {
 			->forTable($table)
 			->where('published', 1)
    			->whereRaw('(published_at < now())')
-   			->whereIn('id', $ids)
-			->orderByDesc('published_at');
+   			->whereIn('id', $ids);
+   		
+   		if (!$where) {
+			$query = $query->orderByDesc('published_at');
+   		}
+   		else {
+   			$query = $where($query);
+   		}
 
 		return $this->getArray($query);
 	}
@@ -1223,7 +1248,7 @@ class DbLayer extends DbHelperBase {
 	}
 	
 	public function finishStreamStats($id) {
-		$this->setField(Tables::STREAM_STATS, $id, 'finished_at', Util::now());
+		$this->setField(Tables::STREAM_STATS, $id, 'finished_at', Date::now());
 	}
 	
 	public function getStreamGameStats($streamId) {
@@ -1272,7 +1297,9 @@ class DbLayer extends DbHelperBase {
 		return $this->getMany(Tables::EVENTS, function($q) {
 			return $q
 				->where('published', 1)
-				->whereRaw('(published_at < now())');
+				->whereRaw('(published_at < now())')
+				->orderByAsc('starts_at')
+				->orderByAsc('ends_at');
 		});
 	}
 	
@@ -1288,7 +1315,40 @@ class DbLayer extends DbHelperBase {
 		return $this->get(Tables::EVENT_TYPES, $id);
 	}
 	
+	public function getEventTypes() {
+		return $this->getMany(Tables::EVENT_TYPES);
+	}
+	
 	public function getEventsByTag($tag) {
-		return $this->getByTag(Tables::EVENTS, Taggable::EVENTS, $tag);
+		return $this->getByTag(Tables::EVENTS, Taggable::EVENTS, $tag, function($q) {
+			return $q
+				->orderByAsc('starts_at')
+				->orderByAsc('ends_at');
+		});
+	}
+	
+	public function getCurrentEvents($filterByGame = null, $days = 7) {
+		return $this->getMany(Tables::EVENTS, function($q) use ($filterByGame, $days) {
+			$q = $q
+				->where('published', 1)
+				->whereRaw('(published_at < now())')
+				->whereRaw('(coalesce(ends_at, date_add(date(starts_at), interval 24*60*60 - 1 second)) >= now())')
+				->whereRaw("(starts_at < date_add(now(), interval {$days} day))");
+
+			if ($filterByGame) {
+				$q = $q->where('game_id', $filterByGame['id']);
+			}
+			else {
+				$q = $q->where('announce', 1);
+			}
+			
+			return $q
+				->orderByAsc('starts_at')
+				->orderByAsc('ends_at');
+		});
+	}
+
+	public function saveEventCache($id, $cache) {
+		$this->setFieldNoStamps(Tables::EVENTS, $id, 'cache', $cache);
 	}
 }

@@ -15,11 +15,16 @@
 			</ol>
 		</div>
 		{% if years %}
-			<div class="panel-body linkblock-big">
+			{#<div class="panel-body linkblock-big">
 				{% for y in years %}
 					<div class="noicon">
 						<b><a href="{{ path_for('main.news.archive.year', { 'year': y }) }}">{{ y }} год</a></b>
 					</div>
+				{% endfor %}
+			</div>#}
+			<div class="panel-body">
+				{% for y in years %}
+					<a class="label label-default" href="{{ path_for('main.news.archive.year', { 'year': y }) }}">{{ y }} год</a>
 				{% endfor %}
 			</div>
 		{% else %}

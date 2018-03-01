@@ -79,7 +79,7 @@
 					var options = {
 				        element: this,
 				        spellChecker: false,
-				        toolbar: [ {#"bold", "italic", "strikethrough", "heading-1", "heading-2", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "table", "|", "preview", "side-by-side", #}"fullscreen" ],
+				        toolbar: [ {#"bold", "italic", "strikethrough", #}"heading-2", "heading-3", "|", {#"quote", #}"unordered-list", "ordered-list", "|", {#"link", "image", "table", "|", "preview", "side-by-side", #}"fullscreen" ],
 				        status: false,
 				        forceSync: true
 				    };
@@ -401,7 +401,8 @@
 		showModal('entity');
 	};
 	
-	$scope.refresh = function() {
+	$scope.refresh = function(data) {
+		$scope.setItem(data);
 		$scope.table.ajax.reload(null, false);
 	};
 	
@@ -416,15 +417,16 @@
 		}
 	};
 	
-	$scope.submitData = function(obj) {
-		console.log(obj);
+	$scope.submitData = function(obj, persist) {
+		//console.log(obj);
 
 		$scope.ajax({
 			method: ($scope.itemId == 0) ? 'post' : 'put',
 			url: '{{ api }}{{ alias }}' + (($scope.itemId == 0) ? '' : '/' + $scope.itemId),
 			data: obj,
 			view: 'entity',
-			onSuccess: $scope.refresh
+			onSuccess: $scope.refresh,
+			persist: persist
 		});
 	};
 	
@@ -448,6 +450,8 @@
 			obj['{{ col }}'] = $('#entityForm').find('#{{ col }}').val();
 		{% endfor %}
 		
+		var persist = $('#entityForm').find('#persist').is(':checked');
+		
 		if ($scope.croppie) {
 			$scope.croppieGetThumb(function(thumb) {
 				if ($scope.originalPicture != -1) { 
@@ -459,11 +463,11 @@
 				var croppieInfo = $('#croppie-upload').croppie('get');
 		    	obj['points'] = croppieInfo.points;
 
-				$scope.submitData(obj);
+				$scope.submitData(obj, persist);
 			});
 		}
 		else {
-			$scope.submitData(obj);
+			$scope.submitData(obj, persist);
 		}
     });
     

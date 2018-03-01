@@ -16,7 +16,7 @@
 			</ol>
 		</div>
 		{% if monthly %}
-		  	<div class="panel-body">
+		  	<div class="panel-body body-nopad">
 				<ul class="nav nav-tabs" role="tablist">
 			  		{% for month, value in monthly %}
 						<li role="presentation"{% if loop.first %} class="active"{% endif %}><a href="#{{ month }}" aria-controls="{{ month }}" role="tab" data-toggle="tab" title="{{ value.full_label }}">{{ value.label }}</a></li>
@@ -28,8 +28,12 @@
 						<div role="tabpanel" class="tab-pane fade{% if loop.first %} in active{% endif %} linkblock-big" id="{{ month }}">
 							{% for n in value.news %}
 								<div class="icon-{{ n.game.alias }}">
-									<a title="[{{ n.game.name }}] {{ n.title|raw }}" href="{{ n.url }}">{{ n.title|raw }}</a>
-									<span class="nowrap">[{{ n.start_date }}]</span>
+									<div>
+										<a title="[{{ n.game.name }}] {{ n.title|raw }}" href="{{ n.url }}">{{ n.title|raw }}</a>
+									</div>
+									<div>
+										{{ n.start_date|raw }}
+									</div>
 								</div>
 							{% endfor %}
 						</div>

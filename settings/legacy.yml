@@ -55,6 +55,7 @@ comics:
   title: Комиксы
   pages_index: /comics/pages
   thumbs_index: /comics/pages/thumb
+  thumb_height: 400
 
 news:
   description_limit: 2000
@@ -69,6 +70,7 @@ sidebar:
   article_limit: 7
   forum_topic_limit: 7
   latest_news_limit: 7
+  future_events_days: 7
 
 default_game_id: 5
 hidden_forum_ids:
@@ -81,4 +83,4 @@ screenshot_dir: /images/screenshots/
 
 webdb_link: 'http://wowhead.com/'
 webdb_ru_link: 'http://ru.wowhead.com/'
-hsdb_ru_link: '//ru.hearthhead.com/'
+hsdb_ru_link: 'http://ru.hearthhead.com/'

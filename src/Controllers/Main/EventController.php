@@ -22,6 +22,8 @@ class EventController extends BaseController {
 			'params' => [
 				'title' => $this->eventsTitle,
 				'events' => $events,
+				'event_games' => $this->db->getGames(),
+				'event_types' => $this->db->getEventTypes(),
 			],
 		]);
 	
@@ -30,6 +32,7 @@ class EventController extends BaseController {
 
 	public function item($request, $response, $args) {
 		$id = $args['id'];
+		$rebuild = $request->getQueryParam('rebuild', false);
 
 		$row = $this->db->getEvent($id);
 
@@ -37,7 +40,7 @@ class EventController extends BaseController {
 			return $this->notFound($request, $response);
 		}
 
-		$event = $this->builder->buildEvent($row);
+		$event = $this->builder->buildEvent($row, $rebuild);
 
 		$params = $this->buildParams([
 			'game' => $event['game'],

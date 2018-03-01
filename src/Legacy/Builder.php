@@ -91,7 +91,7 @@ class Builder extends Contained {
 		$news['url'] = $this->router->news($id);
 		$news['forum_url'] = $this->router->forumTopic($id);
 		
-		$news['description'] = substr(strip_tags($news['text']), 0, 1000);
+		$news['description'] = Strings::trunc($news['text'], 1000);
 		
 		return $news;
 	}
@@ -109,29 +109,24 @@ class Builder extends Contained {
 			$text = $news['cache'];
 		}
 		else {
-			$parsed = $aParser->parseBB($news['text']);
+			$parsed = $aParser->parse($news['text']);
 			$text = $parsed['text'];
 
 			$this->db->saveNewsCache($id, $text);
 		}
 		
 		$text = $nParser->parseCut($id, $text, $full);
-		$text = $aParser->renderArticleLinks($text);
+		$text = $aParser->renderLinks($text);
 		$text = $nParser->makeAbsolute($text);
 
 		$news['text'] = $text;
-
-		if (strlen($text) > 0) {
-			$news['description'] = substr(strip_tags($text), 0, 1000);
-		}
-
+		$news['description'] = Strings::trunc($text, 1000);
 		$news['tags'] = $this->tags($news['tags'], Taggable::NEWS);
-
 		$news['pub_date'] = strtotime($news['published_at']);
 
 		$news = $this->stamps($news);
 
-		$news['start_date'] = $news['published_at'];
+		$news['start_date'] = Date::formatUi($news['published_at']);
 		$news['starter_name'] = $news['author']['name'];
 		$news['starter_url'] = $news['author']['member_url'];
 		$news['url'] = $this->router->news($id);
@@ -149,8 +144,9 @@ class Builder extends Contained {
 		$news['game'] = $this->buildGame($game);
 
 		$news['pub_date'] = $news['start_date'];
-		$news['start_date'] = $this->formatDate($news['start_date']);
+		$news['start_date'] = Date::formatUi($this->formatDate($news['start_date']));
 		$news['url'] = $this->router->news($id);
+		$news['subtitle'] = $news['start_date'];
 		$news['forum_url'] = $this->router->forumTopic($id);
 
 		return $news;
@@ -166,7 +162,8 @@ class Builder extends Contained {
 
 		$news = $this->stamps($news, true);
 
-		$news['start_date'] = $news['published_at'];
+		$news['start_date'] = Date::formatUi($news['published_at']);
+		$news['subtitle'] = $news['start_date'];
 		$news['url'] = $this->router->news($id);
 
 		return $news;
@@ -179,7 +176,7 @@ class Builder extends Contained {
 			'title' => $this->newsParser->decodeTopicTitle($row['title']),
 			'url' => $this->router->forumTopic($row['tid'], true),
 			'game' => $filterByGame ?? $this->db->getGameByForumId($row['forum_id']),
-			'posts' => $row['posts'],
+			'addendum' => $row['posts'],
 		];
 	}
 	
@@ -192,7 +189,7 @@ class Builder extends Contained {
 	}
 	
 	public function buildLatestNews($filterByGame, $limit, $exceptNewsId) {
-		return $this->buildAllNews($filterByGame, 0, $limit, $exceptNewsId);
+		return $this->buildAllNews($filterByGame, 1, $limit, $exceptNewsId);
 	}
 	
 	protected function sortByDate($items, $field = 'pub_date') {
@@ -201,23 +198,38 @@ class Builder extends Contained {
 		]);
 	}
 	
-	public function buildAllNews($filterByGame = null, $offset = 0, $limit = 0, $exceptNewsId = null) {
-		$forumNews = $this->db->getLatestForumNews($filterByGame, $offset, $limit, $exceptNewsId) ?? [];
-		$news = $this->db->getLatestNews($filterByGame, $offset, $limit, $exceptNewsId) ?? [];
+	public function buildAllNews($filterByGame = null, $page = 1, $pageSize = 7, $exceptNewsId = null) {
+		$offset = ($page - 1) * $pageSize;
+		$goal = $pageSize;
+
+		$news = $this->db->getLatestNews($filterByGame, $offset, $goal, $exceptNewsId);
+		$newsCount = count($news);
+		
+		$goal -= $newsCount;
+		
+		if ($goal > 0) {
+			if ($newsCount > 0) {
+				$offset = 0;
+			}
+			else {
+				$offset -= $this->db->getNewsCount($filterByGame);
+			}
+
+			$forumNews = $this->db->getLatestForumNews($filterByGame, $offset, $goal, $exceptNewsId);
+		}
 
 		$merged = array_merge(
 			array_map(function($fn) {
 				return $this->buildForumNews($fn);
-			}, $forumNews),
+			}, $forumNews ?? []),
 			array_map(function($n) {
 				return $this->buildNews($n);
-			}, $news)
+			}, $news ?? [])
 		);
 		
 		$sorted = $this->sortByDate($merged);
-		$news = array_slice($sorted, 0, $limit);
-		
-		return $news;
+
+		return $sorted;
 	}
 	
 	public function buildNewsYears() {
@@ -301,10 +313,10 @@ class Builder extends Contained {
 		
 		$result['game'] = $this->db->getGame($result['game_id']);
 
-		$text = $this->legacyArticleParser->renderArticleLinks($article->text);
+		$text = $this->legacyArticleParser->renderLinks($article->text);
 
 		if (strlen($text) > 0) {
-			$result['description'] = substr(strip_tags($text), 0, 2000);
+			$result['description'] = Strings::trunc($text, 1000);
 		}
 
 		$subArticleRows = $this->db->getSubArticles($article->id);
@@ -324,7 +336,15 @@ class Builder extends Contained {
 
 		$result['text'] = $text;
 
-		return $this->stamps($result);
+		$result = $this->stamps($result);
+		
+		if ($result['published_at']) {
+			$result['published_at'] = Date::formatUi($result['published_at']);
+		}
+		
+		$result['updated_at'] = Date::formatUi($result['updated_at']);
+		
+		return $result;
 	}
 
 	private function getItem($id) {
@@ -667,22 +687,14 @@ class Builder extends Contained {
 		return $skill;
 	}
 
-	public function buildRecipesPaging($index, $skill = null, $query = null, $pageSize) {
+	public function buildComplexPaging($url, $count, $index, $pageSize) {
 		$paging = [];
 		$pages = [];
 		
-		$stepping = 10;
-		$neighbours = 2;
+		$stepping = 1;
+		$neighbours = 7;
 		
-		$count = $this->db->getRecipeCount($skill['id'], $query);
-
 		if ($count > $pageSize) {
-			$url = $this->router->recipes($skill);
-
-			if ($query) {
-				$url .= '?q=' . htmlspecialchars($query);
-			}
-
 			// prev page
 			if ($index > 1) {
         		$prev = $this->buildPage($url, $index - 1, false, $this->decorator->prev(), 'Предыдущая страница');
@@ -763,7 +775,7 @@ class Builder extends Contained {
 	public function buildLatestArticles($filterByGame, $limit, $exceptArticleId) {
 		$rows = $this->db->getLatestArticles($filterByGame, $limit, $exceptArticleId);
 
-		return array_map(function($row) use ($filterByGame) {
+		return array_map(function($row) {
 			return $this->buildArticleLink($row);
 		}, $rows);
 	}
@@ -1603,34 +1615,142 @@ class Builder extends Contained {
 		return $this->getSubArticles($rootId, true);
 	}
 	
-	public function buildEvents($rows) {
-		return array_map(function($row) {
-			return $this->buildEvent($row);
+	public function buildCurrentEvents($game, $days) {
+		$rows = $this->db->getCurrentEvents($game, $days);
+		
+		$events = array_map(function($row) {
+			$event = $this->buildEvent($row);
+			return $this->buildEventLink($event);
 		}, $rows);
+
+		return $events;
+	}
+
+	public function buildEventLink($event) {
+		if (!$event['started']) {
+			$event['addendum'] = Date::to($event['starts_at']);
+		}
+		
+		return $event;
 	}
 	
-	public function buildEvent($event) {
+	public function buildEvents($rows) {
+		$events = array_map(function($row) {
+			return $this->buildEvent($row);
+		}, $rows);
+		
+		$groups = [
+			[
+				'id' => 'current',
+				'label' => 'Текущие',
+				'items' => array_filter($events, function($e) {
+					return $e['started'] && !$e['ended'];
+				}),
+			],
+			[
+				'id' => 'future',
+				'label' => 'Будущие',
+				'items' => array_filter($events, function($e) {
+					return !$e['started'];
+				}),
+			],
+			[
+				'id' => 'past',
+				'label' => 'Прошедшие',
+				'items' => array_filter($events, function($e) {
+					return $e['ended'];
+				}),
+			]
+		];
+		
+		return $groups;
+	}
+	
+	private function buildRegion($region) {
+		$ru = [ $region['name_ru'] ];
+		$en = [ $region['name_en'] ];
+
+		if ($region['parent_id'] && !$region['terminal']) {
+			$parent = $this->db->getRegion($region['parent_id']);
+			
+			if ($parent) {
+				$region['parent'] = $parent;
+				
+				$ru[] = $parent['name_ru'];
+				$en[] = $parent['name_en'];
+			}
+		}
+		
+		$notNull = function($v) { return strlen($v) > 0; };
+		
+		$ru = implode(', ', array_filter($ru, $notNull));
+		$en = implode(', ', array_filter($en, $notNull));
+		
+		if ($en) {
+			$en = " ({$en})";
+		}
+		
+		$region['title'] = $ru . $en;
+
+		return $region;
+	}
+	
+	public function buildEvent($event, $rebuild = false) {
+		$id = $event['id'];
+		
 		$event['game'] = $event['game_id']
 			? $this->db->getGame($event['game_id'])
 			: $this->db->getDefaultGame();
 
 		$event['pub_date'] = strtotime($event['published_at']);
-		
-		$event = $this->stamps($event, true);
 
-		$event['start_date'] = $event['starts_at'];
-		$event['end_date'] = $event['ends_at'];
+		$event = $this->stamps($event);
+
+		$start = $event['starts_at'];
+		$end = $event['ends_at'];
+
+		$event['start_date'] = $start;
+		$event['end_date'] = $end;
 
 		$event['url'] = $this->router->event($event['id']);
 		$event['title'] = $event['name'];
 
-		$region = $this->db->getRegion($event['region_id']);
-		$region['title'] = $region['name_ru'] . ($region['name_en'] ? " ({$region['name_en']})" : '' );
-		$event['region'] = $region;
+		$regionRow = $this->db->getRegion($event['region_id']);
+		if ($regionRow) {
+			$event['region'] = $this->buildRegion($regionRow);
+		}
 		
 		$event['type'] = $this->db->getEventType($event['type_id']);
 
 		$event['tags'] = $this->tags($event['tags'], Taggable::EVENTS);
+
+		// ui
+		$event['interval_ui'] = Date::formatIntervalUi($start, $end);
+		$event['subtitle'] = $event['type']['name'] . ', ' . $event['interval_ui'];
+
+		$event['start_ui'] = Date::formatUi($start);
+		$event['end_ui'] = Date::formatUi($end);
+		
+		// started? ended?
+		$event['started'] = Date::happened($start);
+
+		$end = $end ?? Date::endOfDay($start);
+		$event['ended'] = Date::happened($end);
+		
+		// description
+		if (!$rebuild && strlen($event['cache']) > 0) {
+			$text = $event['cache'];
+		}
+		else {
+			$parsed = $this->articleParser->parse($event['description']);
+			$text = $parsed['text'];
+
+			$this->db->saveEventCache($id, $text);
+		}
+		
+		$text = $this->articleParser->renderLinks($text);
+		
+		$event['description'] = $text;
 
 		return $event;
 	}
@@ -1644,7 +1764,7 @@ class Builder extends Contained {
 			return $this->buildEvent($e);
 		}, $events);
 		
-		return $this->sortByDate($events);
+		return $events;
 	}
 	
 	protected function tags($tags, $tab = null) {

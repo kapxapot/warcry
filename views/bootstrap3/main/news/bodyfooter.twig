@@ -2,7 +2,7 @@
 	{{ news_item.text|raw }}
 </div>
 <div class="panel-footer">
-	<div class="glyphicon-block"><span class="glyphicon glyphicon-time" aria-hidden="true" title="Дата публикации"></span> {{ news_item.start_date ?? 'Не опубликована!' }}</div>
+	<div class="glyphicon-block"><span class="glyphicon glyphicon-time" aria-hidden="true" title="Дата публикации"></span> {% if news_item.start_date %}{{ news_item.start_date|raw }}{% else %}Не опубликована!{% endif %}</div>
 	<div class="glyphicon-block"><span class="glyphicon glyphicon-user" aria-hidden="true" title="Автор"></span> {% if news_item.starter_url %}<a href="{{ news_item.starter_url }}">{{ news_item.starter_name }}</a>{% else %}<b>{{ news_item.starter_name }}</b>{% endif %}</div>
 	{% if news_item.forum_url %}
 		<div class="glyphicon-block"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span> <a href="{{ news_item.forum_url }}" title="Комментарии на форуме">{{ news_item.posts }}</a></div>

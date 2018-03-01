@@ -5,7 +5,7 @@ site_description: 'Все о World of Warcraft, Diablo III, Hearthstone, Heroes 
 short_site_description: 'World of Warcraft, Diablo III, Hearthstone, Overwatch'
 logo: /images/text_logo_4.png
 twitter_card_image: 'http://warcry.ru/images/social_logo.jpg'
-team_mail: team[собака]warcry.ru
+contact_email: team[собака]warcry.ru
 
 # folders for Twig only
 folders:
@@ -26,22 +26,26 @@ labels:
     events: Добавить событие
 
 admin_menu:
-  - games
-  - users
-  - menus
   - news
   - articles
-  - gallery_authors
+  - events
   - streams
   - group:
       title: Комиксы
       items:
         - comic_series
         - comic_standalones
-        - comic_publishers
+  - gallery_authors
   - group:
-      title: События
+      title: Сайт
       items:
-        - events
+        - users
+        - menus
+  - group:
+      title: Справочники
+      items:
+        - games
+        - article_categories
+        - comic_publishers
         - event_types
         - regions

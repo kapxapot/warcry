@@ -49,33 +49,7 @@ class Decorator extends Contained {
 		return "<span{$class}>{$text}</span>";
 	}
 
-	public function imageBlock($source, $alt, $width, $height, $align = null) {
-		$imgText = $this->image("img", $source, $alt, $width, $height);
-
-		if ($imgText && $align) {
-			switch ($align) {
-				case "center":
-					$imgText = "<br/><center>{$imgText}</center><br/>";
-					break;
-					
-				case "left":
-				case "right":
-					$imgText = "<div class=\"img img-{$align}\">{$imgText}</div>";
-					break;
-			}
-		}
-
-		return $imgText;
-	}
-
-	public function screenshotBlock($id, $alt, $width, $height, $align = null) {
-		$ssDir = $this->getSettings('legacy.screenshot_dir');
-		$imgUrl = $ssDir . $id . '.jpg';
-
-		return $this->imageBlock($imgUrl, $alt, $width, $height, $align);
-	}
-
-	function url($url, $text, $title = null, $style = null, $rel = null) {
+	function url($url, $text, $title = null, $style = null, $rel = null, $data = null) {
 		if ($title) {
 			$title = " title=\"{$title}\"";
 		}
@@ -87,8 +61,14 @@ class Decorator extends Contained {
 		if ($rel) {
 			$rel = " rel=\"{$rel}\"";
 		}
+		
+		if (is_array($data)) {
+			$data = implode(array_map(function($k, $v) {
+				return " data-{$k}=\"{$v}\"";
+			}, array_keys($data), $data));
+		}
 
-		return "<a href=\"{$url}\"{$title}{$style}{$rel}>{$text}</a>";
+		return "<a href=\"{$url}\"{$title}{$style}{$rel}{$data}>{$text}</a>";
 	}
 
 	private function articleBase($template) {
@@ -124,6 +104,10 @@ class Decorator extends Contained {
 
 		return "<font class=\"nd_noarticle\" title=\"{$nameEn}{$cat}\">{$nameRu}</font>";
 	}
+	
+	public function entityUrl($url, $text, $title = null) {
+		return $this->url($url, $text, $title, 'nd_article');
+	}
 
 	public function recipePageUrl($id, $title, $rel = null, $content = '[~]') {
 		$url = $this->legacyRouter->recipe($id);
@@ -139,34 +123,9 @@ class Decorator extends Contained {
 		return '[' . round($x) . ',&nbsp;' . round($y) . ']';
 	}
 
-	/*function Money($money) {
-		$copper = $money % 100;
-		$silver = floor(($money % 10000) / 100);
-		$gold = floor($money / 10000);
-
-		$text = "";
-		$delim = " ";
-
-		if ($gold > 0) {
-			$text .= $this->Delim($text, $gold."<img src=\"/images/gold.gif\" style=\"padding-left: 2px\" />", $delim);
-		}
-
-		if ($silver > 0) {
-			$text .= $this->Delim($text, $silver."<img src=\"/images/silver.gif\" style=\"padding-left: 2px\" />", $delim);
-		}
-
-		if ($copper > 0 || ($gold == 0 && $silver == 0)) {
-			$text .= $this->Delim($text, $copper."<img src=\"/images/copper.gif\" style=\"padding-left: 2px\" />", $delim);
-		}
-
-		return $text;
-	}*/
-
 	public function colorBlock($color, $content) {
 		return "<span style=\"color: {$color}\">{$content}</span>";
 	}
-
-	/* NEW DECORATOR */
 
 	public function padLeft($text, $pad) {
 		if ($pad > 0) {
@@ -192,6 +151,9 @@ class Decorator extends Contained {
 		$divClasses = [ 'img' ];
 		$imgClasses = [];
 		
+		$mainTag = 'figure';
+		$captionTag = 'figcaption';
+		
 		switch ($tag) {
 			case 'rightimg':
 				$divClasses[] = 'img-right';
@@ -204,6 +166,8 @@ class Decorator extends Contained {
 			case 'img':
 				//$divClasses[] = 'img-center';
 				//$imgClasses[] = 'center';
+				$mainTag = 'div';
+				$captionTag = 'div';
 				break;
 		}
 
@@ -211,21 +175,16 @@ class Decorator extends Contained {
 			if ($alt) {
 				$alt = htmlspecialchars($alt, ENT_QUOTES);
 				$imgAttrText .= " title=\"{$alt}\"";
-				$subText = "<div class=\"img-caption\">{$alt}</div>";
+				$subText = "<{$captionTag} class=\"img-caption\">{$alt}</{$captionTag}>";
 			}
 			
 			$imgSrc = $thumb ?? $source;
 
+			$imgClasses[] = 'img-responsive';
+
 			if ($width > 0) {
 				$imgAttrText .= " width=\"{$width}\"";
 				$thumb = $imgSrc;
-			}
-			else {
-				$imgClasses[] = 'img-responsive';
-				/*if (isset($divClasses['center'])) {
-					$imgClasses[] = 'center';
-					unset($divClasses['center']);
-				}*/
 			}
 
 			if ($height > 0) {
@@ -241,7 +200,7 @@ class Decorator extends Contained {
 				$imgText = "<a href=\"{$source}\" class=\"colorbox\">{$imgText}</a>";
 			}
 
-			$imgText = "<div{$divClassText}>{$imgText}{$subText}</div>";
+			$imgText = "<{$mainTag}{$divClassText}>{$imgText}{$subText}</{$mainTag}>";
 		}
 
 		return $imgText;
@@ -323,11 +282,11 @@ class Decorator extends Contained {
 		$fullstyle = $visible ? "block" : "none";
 
 		$short = "<div id=\"{$shortid}\" style=\"display:{$shortstyle};\">
-				<span class=\"spoiler-header\" onclick=\"{$fullid}.style.display='block'; {$shortid}.style.display='none';\">{$title} <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span></span>
+				<span class=\"spoiler-header\" onclick=\"{$fullid}.style.display='block'; {$shortid}.style.display='none';\">{$title} <span class=\"glyphicon glyphicon-chevron-right\" aria-hidden=\"true\"></span></span>
 				</div>";
 
 		$full = "<div id=\"{$fullid}\" style=\"display:{$fullstyle};\">
-				<span class=\"spoiler-header\" onclick=\"{$fullid}.style.display='none';{$shortid}.style.display='block';\">{$title} <span class=\"glyphicon glyphicon-minus\" aria-hidden=\"true\"></span></span>
+				<span class=\"spoiler-header\" onclick=\"{$fullid}.style.display='none';{$shortid}.style.display='block';\">{$title} <span class=\"glyphicon glyphicon-chevron-down\" aria-hidden=\"true\"></span></span>
 				<div class=\"spoiler-body\">{$body}</div>
 			</div>";
 
@@ -350,5 +309,15 @@ class Decorator extends Contained {
 	
 	public function prev() {
 		return '<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>';
+	}
+	
+	public function list($items, $ordered = false) {
+		$tag = $ordered ? 'ol' : 'ul';
+
+		$items = array_map(function($item) {
+			return '<li>' . $item . '</li>';
+		}, $items);
+					
+		return  '<' . $tag . '>' . implode($items) . '</' . $tag . '>';
 	}
 }

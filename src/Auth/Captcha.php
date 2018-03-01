@@ -3,7 +3,7 @@
 namespace App\Auth;
 
 use Warcry\Contained;
-use Warcry\Util\Util;
+use Warcry\Util\Date;
 use Warcry\Util\Numbers;
 
 class Captcha extends Contained {
@@ -14,7 +14,7 @@ class Captcha extends Contained {
 		// .. your rules here. mine are mine ;)
 	];
 	
-	public function __construct() {
+	public function __construct($container) {
 		parent::__construct($container);
 		
 		$this->numbers = new Numbers;
@@ -51,17 +51,14 @@ class Captcha extends Contained {
 	}
 	
 	private function save($captcha) {
-		$captcha['expires_at'] = Util::generateExpirationTime(10);
+		$captcha['expires_at'] = Date::generateExpirationTime(10);
 		
-		$_SESSION['captcha'] = $captcha;
+		$this->session->set('captcha', $captcha);
 	}
 	
 	// после прочтения сжечь
 	private function load() {
-		$captcha = $_SESSION['captcha'];
-		unset($_SESSION['captcha']);
-		
-		return $captcha;
+		return $this->session->getAndDelete('captcha');
 	}
 	
 	public function validate($number) {

@@ -13,7 +13,7 @@
 				<div class="panel panel-primary">
 					<div class="panel-heading panel-title">
 						<header class="icon-{{ news_item.game.alias }}">
-							<a href="{{ path_for('main.news', { 'id': news_item.id }) }}" title="[{{ news_item.game.name }}] {{ news_item.title }}">{{ news_item.title }}</a>
+							<a href="{{ path_for('main.news', { 'id': news_item.id }) }}" title="[{{ news_item.game.name }}] {{ news_item.title|raw }}">{{ news_item.title|raw }}</a>
 						</header>
 						<div class="panel-title-buttons">
 							{{ m.edit_button('news', news_item.id, news_item.access.edit) }}
@@ -25,8 +25,15 @@
 		{% else %}
 			<div>По заданным параметрам новости не найдены.</div>
 		{% endif %}
-		<div class="all-news">
+		
+		{% if paging %}
+			<div id="news-pagination">
+				{% include 'main/includes/paging.twig' %}
+			</div>
+		{% endif %}
+
+		{#<div class="all-news">
 			<a class="btn btn-lg btn-default btn-block" href="{{ path_for('main.news.archive') }}" role="button">Архив новостей &raquo;&raquo;</a>
-		</div>
+		</div>#}
 	</div>
 {% endblock %}

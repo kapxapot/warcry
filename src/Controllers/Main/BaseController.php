@@ -58,6 +58,11 @@ class BaseController extends Controller {
 					case 'stream':
 						$result[$part] = $this->builder->buildOnlineStream($game);
 						break;
+					
+					case 'events':
+						$days = $this->getSettings('legacy.sidebar.future_events_days');
+						$result[$part] = $this->builder->buildCurrentEvents($game, $days);
+						break;
 
 					default:
 						$bits = explode('.', $part);

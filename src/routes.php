@@ -53,6 +53,8 @@ $app->group($base, function() use ($root, $settings, $access, $container) {
 	$this->get('/news/archive/{year:\d+}', \App\Controllers\Main\NewsController::class . ':archiveYear')->setName('main.news.archive.year');
 	$this->get('/rss', \App\Controllers\Main\NewsController::class . ':rss')->setName('main.rss');
 	
+	//$this->get('/articles/convert/{id}[/{cat}]', \App\Controllers\Main\ArticleController::class . ':convert')->setName('main.articles.convert');
+	$this->get('/articles/source/{id}[/{cat}]', \App\Controllers\Main\ArticleController::class . ':source')->setName('main.articles.convert');
 	$this->get('/articles/{id}[/{cat}]', \App\Controllers\Main\ArticleController::class . ':item')->setName('main.article');
 	
 	$this->get('/streams', \App\Controllers\Main\StreamController::class . ':index')->setName('main.streams');

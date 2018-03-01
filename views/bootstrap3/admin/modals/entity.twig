@@ -4,6 +4,7 @@
 
 {% set modal_name = 'entity' %}
 {% set modal_title = '{{itemEditLabel}} ' ~ name_gen %}
+{% set modal_persist = true %}
 
 {% block modal_body %}
 	{% for name, value in hidden %}

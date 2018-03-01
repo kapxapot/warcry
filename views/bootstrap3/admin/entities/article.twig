@@ -8,10 +8,14 @@
 		var textField = $('#entityForm').find('#text');
 	
 		textField.prop('disabled', true);
+		
+		$scope.loading = true;
 	
-		$http.get('/api/v1/articles/' + $scope.itemId).success(function(data) {
+		$http.get('{{ api }}articles/' + $scope.itemId).success(function(data) {
 			textField.val(data['text']);
 			textField.prop('disabled', false);
+			
+			$scope.loading = false;
 			
 			init();
 		});
